@@ -163,6 +163,37 @@
   .viewer-caption textarea{width:100%;min-height:54px;max-height:120px;border:1px solid #d8dfe5;border-radius:3px;padding:8px 10px;resize:vertical;font:inherit;font-weight:400;color:#31445b;}
   .viewer-pager{display:flex;align-items:center;gap:8px;}
   .viewer-hint{grid-column:1/-1;color:#78879a;font-size:11px;}
+  /* 大圖編輯：左側可直接選取的照片縮圖列，保留原 CIB 配色。 */
+  .viewer-content{display:flex;flex:1;min-height:0;min-width:0;overflow:hidden;}
+  .viewer-thumbs{width:182px;flex:0 0 182px;overflow-y:auto;overflow-x:hidden;background:#f5f8fb;
+    border-right:1px solid #dce4ed;padding:10px 9px;scrollbar-gutter:stable;}
+  .viewer-thumbs-title{display:flex;align-items:center;justify-content:space-between;gap:5px;
+    color:#475f7b;font-size:13px;font-weight:700;margin:1px 0 9px;}
+  .viewer-thumbs-title small{font-size:12px;color:#768ba2;font-weight:400;}
+  .viewer-thumbs-list{display:flex;flex-direction:column;gap:8px;}
+  .viewer-thumb{width:100%;display:flex;flex-direction:column;gap:4px;text-align:left;cursor:pointer;
+    border:2px solid #dfe5eb;border-radius:5px;background:#fff;padding:6px;color:#506078;
+    transition:border-color .12s,background .12s;}
+  .viewer-thumb:hover{border-color:#87b9dd;background:#f5fbff;}
+  .viewer-thumb[aria-current="true"]{border-color:#1389ce;background:#e8f4ff;
+    box-shadow:inset 4px 0 0 #1389ce;color:#114e75;}
+  .viewer-thumb:focus-visible{outline:3px solid #0b78bb;outline-offset:2px;}
+  .viewer-thumb img{display:block;width:100%;height:90px;object-fit:contain;background:#e6ebf0;
+    border:1px solid #dbe2e8;border-radius:2px;pointer-events:none;}
+  .viewer-thumb-number{font-size:12px;font-weight:700;}
+  .viewer-thumb-caption{font-size:11px;color:#718092;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .viewer-stage{min-width:0;}
+  @media(max-width:760px){
+    .viewer-content{flex-direction:column;}
+    .viewer-thumbs{width:100%;flex:0 0 auto;max-height:110px;overflow-x:auto;overflow-y:hidden;
+      border-right:0;border-bottom:1px solid #dce4ed;padding:6px 9px;scrollbar-gutter:auto;}
+    .viewer-thumbs-title{margin:0 0 4px;}
+    .viewer-thumbs-list{flex-direction:row;gap:6px;}
+    .viewer-thumb{width:86px;min-width:86px;flex:0 0 86px;padding:3px;gap:2px;}
+    .viewer-thumb img{height:48px;}
+    .viewer-thumb-number{font-size:11px;}
+    .viewer-thumb-caption{display:none;}
+  }
   body.viewer-open{overflow:hidden;}
   @media(max-width:700px){.photo-viewer{padding:3px;}.viewer-window{width:100vw;height:99vh;min-height:0;}.viewer-tools{gap:3px;padding:7px;}.viewer-tools .btn{padding:4px 7px;}.viewer-bottom{grid-template-columns:1fr;}.viewer-pager{justify-content:space-between;}.viewer-hint{grid-column:1;}}
 
@@ -511,10 +542,16 @@
       <button class="btn white" type="button" id="mark-undo">復原標記</button>
       <button class="btn white" type="button" id="mark-clear">清除標記</button>
     </div>
-    <div class="viewer-stage" id="viewer-stage" aria-label="照片顯示與標記區">
-      <div class="viewer-transform" id="viewer-transform">
-        <img id="viewer-image" alt="目前照片" draggable="false">
-        <svg id="viewer-markup" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+    <div class="viewer-content">
+      <aside class="viewer-thumbs" aria-label="照片縮圖清單">
+        <div class="viewer-thumbs-title"><span>照片清單</span><small id="viewer-thumbs-count">0 張</small></div>
+        <div class="viewer-thumbs-list" id="viewer-thumbs-list"></div>
+      </aside>
+      <div class="viewer-stage" id="viewer-stage" aria-label="照片顯示與標記區">
+        <div class="viewer-transform" id="viewer-transform">
+          <img id="viewer-image" alt="目前照片" draggable="false">
+          <svg id="viewer-markup" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+        </div>
       </div>
     </div>
     <div class="viewer-bottom">
@@ -522,7 +559,7 @@
         <textarea id="viewer-caption" rows="2" placeholder="輸入這張照片的說明（切換照片會自動保留）"></textarea>
       </label>
       <div class="viewer-pager"><button class="btn white" id="viewer-prev" type="button">〈 上一張</button><span class="tip" id="viewer-bottom-counter">1 / 1</span><button class="btn white" id="viewer-next" type="button">下一張 〉</button></div>
-      <div class="viewer-hint">滑鼠滾輪縮放（以游標為中心） · 拖曳移動畫面 · 選擇標記模式後在照片上拖拉畫箭頭或點選圓點 · 鍵盤 ← → 切換照片、Esc 關閉</div>
+      <div class="viewer-hint">滑鼠滾輪縮放（以游標為中心） · 拖曳移動畫面 · 選擇標記模式後在照片上拖拉畫箭頭或點選圓點 · 鍵盤 ← → 切換照片；說明文字輸入中使用 Ctrl＋← / Ctrl＋→ 切換；Esc 關閉</div>
     </div>
   </div>
 </div>
@@ -949,7 +986,33 @@ function photoDrop(e){
 function photoDragEnd(){draggedPhotoId=null;clearPhotoDropCue();}
 function getViewerRecord(){const r=getCurrent();return r&&(view.recordId===(r.id||'__draft__'))?r:null;}
 function getViewerPhoto(){return getViewerRecord()?.photos?.find(p=>p.id===view.photoId)||null;}
-function savePhotoCaption(){const p=getViewerPhoto();if(p&&p.caption!==$('viewer-caption').value){p.caption=$('viewer-caption').value;markDirty();}}
+function savePhotoCaption(){
+  const p=getViewerPhoto();
+  if(p&&p.caption!==$('viewer-caption').value){
+    p.caption=$('viewer-caption').value;markDirty();
+    const el=[...$('viewer-thumbs-list').querySelectorAll('[data-viewer-thumb]')]
+      .find(x=>x.dataset.viewerThumb===p.id)?.querySelector('.viewer-thumb-caption');
+    if(el)el.textContent=p.caption||'尚無說明';
+  }
+}
+function renderViewerThumbs(){
+  const r=getViewerRecord(),photos=r?.photos||[];
+  $('viewer-thumbs-count').textContent=`${photos.length} 張`;
+  $('viewer-thumbs-list').innerHTML=photos.map((p,i)=>`
+    <button type="button" class="viewer-thumb" data-viewer-thumb="${esc(p.id)}"
+       aria-label="第 ${i+1} 張，${esc(p.name)}" aria-current="${p.id===view.photoId}">
+      <img src="${esc(p.url)}" alt="" loading="lazy" draggable="false">
+      <span class="viewer-thumb-number">第 ${i+1} 張</span>
+      <span class="viewer-thumb-caption" title="${esc(p.name)}">${esc(p.caption||'尚無說明')}</span>
+    </button>`).join('');
+}
+function highlightViewerThumb(){
+  for(const el of $('viewer-thumbs-list').querySelectorAll('[data-viewer-thumb]')){
+    const active=el.dataset.viewerThumb===view.photoId;
+    el.setAttribute('aria-current',String(active));
+    if(active)el.scrollIntoView({block:'nearest',inline:'nearest'});
+  }
+}
 function setViewerMode(mode){
   view.mode=mode;
   $('viewer-stage').classList.toggle('mode-mark',mode!=='pan');
@@ -1012,6 +1075,7 @@ function viewerLoadPhoto(id){
   $('viewer-caption').value=p.caption||'';
   $('viewer-prev').disabled=idx===0;
   $('viewer-next').disabled=idx===r.photos.length-1;
+  highlightViewerThumb();
   view.w=0;view.h=0;view.preview=null;view.pointer=null;
   const image=$('viewer-image');
   image.onload=()=>{
@@ -1031,7 +1095,7 @@ function openPhotoViewer(id){
   const photo=r.photos.find(p=>p.id===id)||r.photos[0];
   view.open=true;view.recordId=r.id||'__draft__';view.lastFocus=document.activeElement;
   $('photo-viewer').hidden=false;document.body.classList.add('viewer-open');
-  setViewerMode('pan');viewerLoadPhoto(photo.id);
+  setViewerMode('pan');renderViewerThumbs();viewerLoadPhoto(photo.id);
   $('viewer-close').focus();
 }
 function closePhotoViewer(){
@@ -1155,6 +1219,10 @@ $('photo-gallery').addEventListener('keydown',e=>{
 $('viewer-close').addEventListener('click',closePhotoViewer);
 $('photo-viewer').addEventListener('mousedown',e=>{if(e.target===$('photo-viewer'))closePhotoViewer();});
 $('viewer-caption').addEventListener('input',savePhotoCaption);
+$('viewer-thumbs-list').addEventListener('click',e=>{
+  const b=e.target.closest('[data-viewer-thumb]');
+  if(b&&view.open)viewerLoadPhoto(b.dataset.viewerThumb);
+});
 $('viewer-prev').addEventListener('click',()=>switchPhoto(-1));
 $('viewer-next').addEventListener('click',()=>switchPhoto(1));
 $('zoom-in').addEventListener('click',()=>zoomViewer(1.25));
@@ -1172,9 +1240,13 @@ $('viewer-stage').addEventListener('pointercancel',e=>{view.pointer=null;view.pr
 document.addEventListener('keydown',e=>{
   if(!view.open)return;
   if(e.key==='Escape'){e.preventDefault();closePhotoViewer();return;}
-  if(e.target?.matches('input,textarea,select'))return;
-  if(e.key==='ArrowLeft'){e.preventDefault();switchPhoto(-1);}
-  if(e.key==='ArrowRight'){e.preventDefault();switchPhoto(1);}
+  const typing=!!e.target?.matches('input,textarea,select,[contenteditable="true"]');
+  // 文字輸入中保留方向鍵移動游標；搭配 Ctrl 才切換照片。
+  // 非輸入欄位則直接以左右方向鍵切換，不影響原本縮放和標記功能。
+  if(!['ArrowLeft','ArrowRight'].includes(e.key)||e.altKey||e.metaKey)return;
+  if(typing&&!e.ctrlKey)return;
+  e.preventDefault();
+  switchPhoto(e.key==='ArrowLeft'?-1:1);
 });
 window.addEventListener('resize',()=>{if(view.open&&view.w)fitViewer();});
 refreshGroups();filtered=groups;loadRecord(records[0].id);applyFilters();
