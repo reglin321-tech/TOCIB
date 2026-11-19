@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>槍枝性能檢測－案件編輯原版／初篩報告左右配置</title>
+<style>
+  :root { --ink:#25344b; --blue:#198fcc; --line:#dde1e6; --stripe:#f3f3f3; }
+  * { box-sizing:border-box; }
+  html { font-size:14px; }
+  body { margin:0; padding:5px; background:#efefef; font-family:'Microsoft JhengHei','Noto Sans TC','Segoe UI',Arial,sans-serif; color:var(--ink); }
+  button,input,select { font:inherit; }
+  button { cursor:pointer; }
+  .panel { background:#fff; border-radius:6px; box-shadow:0 2px 9px rgba(0,0,0,.10); overflow:hidden; }
+  .list-panel{min-height:735px;}
+  .panel-head { height:51px; display:flex; align-items:center; border-bottom:1px solid #e8e8e8; padding:0 22px; font-size:16px; font-weight:400; }
+  .panel-body { padding:30px 29px 30px; }
+  .filters { display:grid; grid-template-columns:1.15fr 1.15fr 1.15fr 1.15fr .53fr 1.15fr; gap:17px 21px; align-items:end; }
+  .field { min-width:0; display:flex; flex-direction:column; gap:7px; }
+  .field label { font-size:12px; font-weight:600; line-height:1.2; }
+  .field.blank label { visibility:hidden; }
+  .field input,.field select,.search-right input,.modal input,.modal select { width:100%; height:35px; background:white; border:1px solid #e0e0e0; border-radius:2px; padding:0 11px; outline:none; color:#40516c; }
+  .field input::placeholder { color:#c3c6cc; }
+  .field input:focus,.field select:focus,.search-right input:focus,.modal input:focus { border-color:#85b9db; box-shadow:0 0 0 2px rgba(25,143,204,.09); }
+  .date-input { display:flex; width:100%; }
+  .date-input .calendar { display:flex; align-items:center; justify-content:center; width:34px; height:35px; border:1px solid #e0e0e0; border-right:0; border-radius:2px 0 0 2px; color:#263e56; font-size:18px; flex:none; background:#fff; }
+  .date-input input { border-radius:0 2px 2px 0; }
+  .date-end { grid-column:1; grid-row:2; }
+  .filter-actions { grid-column:2 / span 2; grid-row:2; display:flex; align-items:end; gap:3px; }
+  .btn { min-height:35px; border-radius:2px; border:1px solid transparent; padding:6px 12px; white-space:nowrap; }
+  .btn.primary { background:#1993ce; color:white; }
+  .btn.gray { background:#828b96; color:white; }
+  .btn.white { min-height:30px; background:#f7f7f7; border:1px solid #aaa; color:#23344b; padding:3px 10px; }
+  .btn:hover { filter:brightness(.96); }
+  .toolbar { display:flex; justify-content:space-between; align-items:center; margin-top:13px; margin-bottom:10px; gap:15px; }
+  .search-right { display:flex; align-items:center; gap:6px; font-size:12px; }
+  .search-right input { width:151px; height:28px; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+  th,td { border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:middle; line-height:1.52; overflow-wrap:anywhere; }
+  thead th { height:54px; background:#fff; color:#26324b; font-size:12px; font-weight:700; position:relative; }
+  thead th:not(:first-child)::after { content:'↟↡'; position:absolute; right:7px; top:50%; transform:translateY(-50%); color:#c7ccd2; font-size:13px; font-weight:400; }
+  thead th:first-child::after { content:'↑↓'; position:absolute; right:5px; top:50%; transform:translateY(-50%); font-size:11px; font-weight:400; }
+  tbody tr.case-row { cursor:pointer; }
+  tbody tr.case-row:nth-of-type(odd) { background:#f4f4f4; }
+  tbody tr.case-row:hover { background:#e8f1fa; }
+  tbody tr.case-row.open { background:#dce8f7; }
+  tbody tr.gun-row { background:#fff; }
+  tbody tr.gun-row:nth-of-type(even) { background:#fafbfc; }
+  tbody tr.gun-row:hover { background:#f2f8fd; }
+  tbody td { height:35px; }
+  .center { text-align:center; }
+  .center input[type=checkbox] { accent-color:#198fcc; width:13px; height:13px; vertical-align:middle; margin:0; cursor:pointer; }
+  .case-id,.gun-id { color:#27466f; }
+  .case-id { display:flex; align-items:center; gap:5px; min-width:0; }
+  .chevron { display:inline-flex; align-items:center; justify-content:center; width:17px; height:18px; border:0; background:transparent; padding:0; color:#566b87; font-size:12px; flex:none; }
+  .case-row:hover .chevron,.case-row.open .chevron { color:#116ba4; }
+  .chevron::before { content:'▶'; display:inline-block; font-size:10px; transition:transform .12s ease; }
+  .case-row.open .chevron::before { transform:rotate(90deg); }
+  .case-num-text { min-width:0; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+  .case-count { font-weight:600; color:#315475; white-space:nowrap; }
+  .gun-id { padding-left:18px; display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+  .gun-id::before { content:'└'; display:inline; margin-right:8px; color:#a1afbc; }
+  .gun-link { color:#284d7d; text-decoration:none; }
+  .gun-link:hover { color:#0b70aa; text-decoration:underline; }
+  .no-link { color:#8c98a4; }
+  .child-marker { border-left:3px solid #abc8e5; }
+  .single-cell { text-align:center; padding:22px; color:#768392; }
+  .pager { display:flex; justify-content:flex-end; align-items:center; gap:0; margin-top:7px; }
+  .page-btn { min-width:30px; height:32px; background:#fff; border:1px solid #d8dfe6; border-left:0; color:#2385bc; }
+  .page-btn:first-child { border-left:1px solid #d8dfe6; border-radius:3px 0 0 3px; }
+  .page-btn:last-child { border-radius:0 3px 3px 0; }
+  .page-btn.active { background:#1994d0; color:white; border-color:#1994d0; }
+  .page-btn:disabled { color:#bac4cf; cursor:default; }
+  .modal-backdrop { position:fixed; inset:0; z-index:99; background:rgba(20,31,48,.37); display:none; align-items:center; justify-content:center; padding:15px; }
+  .modal-backdrop.show { display:flex; }
+  .modal { width:min(600px,100%); background:white; border-radius:5px; box-shadow:0 12px 45px rgba(0,0,0,.2); overflow:hidden; }
+  .modal-head { font-size:17px; padding:16px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .close-btn { background:none; border:0; font-size:24px; color:#748091; }
+  .modal-body { padding:17px 20px; }
+  .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .modal .field label { color:#3a4655; }
+  .modal-footer { border-top:1px solid var(--line); padding:13px 20px; display:flex; justify-content:flex-end; gap:7px; }
+  .modal-footer button { min-height:34px; }
+  .modal-info { color:#66768a; line-height:1.7; }
+  .print-only { display:none; }
+  @media (max-width:1200px) { .filters { grid-template-columns:repeat(3,minmax(0,1fr)); } .date-end,.filter-actions { grid-column:auto; grid-row:auto; } table { min-width:1180px; } }
+  @media (max-width:700px) { .panel-body { padding:18px 12px; }.filters {grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}.filter-actions { grid-column:span 2; }.panel-head { padding:0 14px; } .toolbar { flex-wrap:wrap; } .modal-grid { grid-template-columns:1fr; } }
+  @media print { body { padding:0; background:#fff; } .panel { display:none; } .modal-backdrop { display:none!important; } .print-only { display:block; } .print-labels { display:grid; grid-template-columns:repeat(3,1fr); gap:14mm; }.print-label { font-size:18px; padding:20px 8px; text-align:center; border:1px solid #222; page-break-inside:avoid; } }
+
+  /* 新增區塊只延用 CIB 原有的白底卡片、6 欄欄位與藍色選取按鈕。 */
+  .editor-panel { margin-top:13px; }
+  .editor-body { padding:30px 30px 33px; }
+  .form-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); column-gap:22px; row-gap:18px; }
+  .form-grid .field input,.form-grid .field select,.report-field input,.report-field select,.report-field textarea {
+    width:100%; height:35px; border:1px solid #e1e1e1; border-radius:2px; background:#fff; color:#465873; padding:0 10px; font:inherit;
+  }
+  .form-grid .field input:focus,.form-grid .field select:focus,.report-field input:focus,.report-field textarea:focus{outline:1px solid #8cbbdf;}
+  .required { color:#d84747; margin-left:2px; }
+  .form-footer { border-top:1px solid #ebebeb; padding:15px 18px; display:flex; align-items:center; justify-content:flex-end; gap:6px; min-height:64px; }
+  .form-footer .form-status { margin-right:auto; padding-left:10px; color:#6e8194; font-size:12px; }
+  .btn.small { min-height:31px; padding:4px 10px; }
+  .edit-note { color:#728498; font-size:12px; margin-top:12px; }
+  .report-body { padding:23px 30px 30px; }
+  .report-section-title { font-size:14px; margin:3px 0 10px; font-weight:700; }
+  .report-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px 18px; align-items:start; }
+  .report-field { min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .report-field label,.report-field .label { font-size:12px; font-weight:600; }
+  .report-field input[readonly],.report-field select:disabled{background:#f0f0f0;color:#707c8b;opacity:1;}
+  .report-field textarea{height:auto;min-height:58px;padding:8px 10px;}
+  .span-2{grid-column:span 2;}.span-3{grid-column:span 3;}.span-4{grid-column:span 4;}.span-5{grid-column:span 5;}.span-6{grid-column:span 6;}.span-8{grid-column:span 8;}.span-9{grid-column:span 9;}.span-12{grid-column:span 12;}
+  .report-gap{height:15px;}
+  .report-subhead { font-size:13px; font-weight:600; margin:5px 0 10px; }
+  .report-question{min-width:0;margin-bottom:5px;}
+  .question-label { display:block; font-size:12px; font-weight:600; line-height:1.5; margin-bottom:7px; }
+  .pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .pill { display:inline-flex; cursor:pointer; }
+  .pill input {position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+  .pill span { display:inline-block; border:1px solid #e6e8ed; border-radius:17px; padding:5px 12px; color:#8f98a5; background:#fff; font-size:12px; line-height:1.4; white-space:normal; }
+  .pill input:checked+span { color:#168bd0; border-color:#28a6ef; background:#f5fbff; }
+  .pill input:focus-visible+span{outline:2px solid #148ed0;outline-offset:2px;}
+  .photo-block{margin-top:25px;}
+  .photo-block .report-subhead{margin-bottom:7px;}
+  .photo-toolbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:9px;}
+  .photo-gallery{border:1px solid #b7b7b7;min-height:185px;display:flex;align-content:flex-start;flex-wrap:wrap;gap:12px;padding:12px;background:#fff;}
+  .photo-gallery.drag-to-end{box-shadow:inset 0 0 0 2px #35a6e4;}
+  .photo-tile{width:170px;max-width:calc(50% - 6px);box-sizing:border-box;display:flex;flex-direction:column;gap:5px;padding:6px;border:1px solid #dfe4e9;border-radius:3px;background:#fff;font-size:11px;position:relative;}
+  .photo-tile.is-selected{background:#f0f8fd;border-color:#78bceb;}
+  .photo-tile.is-dragging{opacity:.38;}
+  .photo-tile.drop-before{box-shadow:-4px 0 0 #1993ce;}
+  .photo-tile.drop-after{box-shadow:4px 0 0 #1993ce;}
+  .photo-tile img{width:100%;height:100px;object-fit:contain;background:#e7e7e7;cursor:zoom-in;}
+  .photo-tile-head{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:11px;}
+  .photo-tile .photo-position{font-weight:600;color:#485c73;}
+  .photo-tile .drag-handle{font:inherit;color:#3b739b;border:1px solid #d8e4ed;background:#f8fbfe;border-radius:2px;padding:2px 7px;cursor:grab;user-select:none;}
+  .photo-tile .drag-handle:active{cursor:grabbing;}
+  .photo-tile .drag-handle:focus-visible{outline:2px solid #1993ce;outline-offset:2px;}
+  .photo-tile .photo-filename{color:#657387;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .photo-tile .caption-preview{width:100%;color:#6d7d91;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:15px;}
+  .photo-status{min-height:17px;margin-top:7px;}
+  .photo-viewer[hidden]{display:none!important;}
+  .photo-viewer{position:fixed;inset:0;z-index:9999;background:rgba(19,27,40,.82);display:flex;align-items:center;justify-content:center;padding:15px;}
+  .viewer-window{background:#fff;border-radius:6px;width:min(1440px,98vw);height:min(94vh,1020px);min-height:430px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 70px rgba(0,0,0,.45);}
+  .viewer-top{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid #e2e6eb;min-height:51px;}
+  .viewer-title{min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .viewer-title strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .viewer-title small{font-size:11px;color:#748093;}
+  .viewer-close{background:#fff;border:1px solid #d1d9e0;width:33px;height:33px;border-radius:3px;color:#425269;font-size:22px;line-height:1;cursor:pointer;flex:none;}
+  .viewer-tools{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:8px 13px;border-bottom:1px solid #e6e6e6;}
+  .viewer-tools .btn{min-height:30px;font-size:12px;padding:4px 9px;}
+  .viewer-tools .btn.active{background:#198fcc;border-color:#198fcc;color:#fff;}
+  .viewer-tools .tool-separator{height:22px;border-left:1px solid #ddd;margin:0 5px;}
+  .viewer-tools #zoom-label{min-width:45px;text-align:center;font-size:12px;color:#405675;}
+  .viewer-color{height:30px;width:34px;padding:2px;border:1px solid #ccd5dc;background:white;cursor:pointer;}
+  .viewer-stage{flex:1;position:relative;min-height:80px;overflow:hidden;background:#172331;touch-action:none;cursor:grab;user-select:none;}
+  .viewer-stage.mode-mark{cursor:crosshair;}
+  .viewer-stage.dragging{cursor:grabbing;}
+  .viewer-transform{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;will-change:transform;}
+  .viewer-transform img{display:block;max-width:none;max-height:none;pointer-events:none;user-select:none;}
+  .viewer-transform svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;}
+  .viewer-bottom{padding:10px 14px 11px;border-top:1px solid #e2e6eb;background:white;display:grid;grid-template-columns:1fr auto;gap:9px 16px;align-items:center;}
+  .viewer-caption{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:12px;font-weight:600;}
+  .viewer-caption textarea{width:100%;min-height:54px;max-height:120px;border:1px solid #d8dfe5;border-radius:3px;padding:8px 10px;resize:vertical;font:inherit;font-weight:400;color:#31445b;}
+  .viewer-pager{display:flex;align-items:center;gap:8px;}
+  .viewer-hint{grid-column:1/-1;color:#78879a;font-size:11px;}
+  body.viewer-open{overflow:hidden;}
+  @media(max-width:700px){.photo-viewer{padding:3px;}.viewer-window{width:100vw;height:99vh;min-height:0;}.viewer-tools{gap:3px;padding:7px;}.viewer-tools .btn{padding:4px 7px;}.viewer-bottom{grid-template-columns:1fr;}.viewer-pager{justify-content:space-between;}.viewer-hint{grid-column:1;}}
+
+  .photo-tile input{accent-color:#1993ce;}
+  .photo-placeholder {color:#98a4af;display:flex;align-items:center;justify-content:center;min-height:160px;width:100%;font-size:13px;}
+  .photo-tile-actions{display:flex;align-items:center;gap:4px;}
+  .photo-tile-actions button{border:1px solid #ddd;background:#fff;border-radius:2px;cursor:pointer;font-size:11px;}
+  .photo-tile-actions button.danger{color:#cc3b3b;}
+  .tip { font-size:12px;color:#8090a0; }
+  .form-status.success{color:#148252;}
+  .case-row.active-case{background:#dce8f7;}
+  .gun-row.active-gun{background:#eaf5ff;}
+  .editor-banner{font-size:12px;color:#8190a0;margin:0 0 12px;}
+  @media(max-width:1250px){.form-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.report-grid{grid-template-columns:repeat(6,minmax(0,1fr));}.report-grid>[class*='span-']{grid-column:span 3;}.report-grid>.span-12{grid-column:span 6;}}
+  @media(max-width:700px){.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.editor-body,.report-body{padding:18px 14px;}.report-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.report-grid>[class*='span-']{grid-column:span 2;}.photo-tile{width:calc(50% - 6px);}.form-footer{flex-wrap:wrap;}.form-footer .form-status{flex-basis:100%;}}
+
+  /* 依據檢測報告的項目與上下順序呈現，不變更原有按鈕與配色。 */
+  [hidden]{display:none!important;}
+  .report-section-title{margin-top:13px;}
+  .appendix-title{margin-top:25px;margin-bottom:9px;}
+  .report-like{max-width:1100px;border:1px solid #e6e8ec;background:#fff;margin:8px 0 17px;}
+  .report-like-title{padding:10px 14px;background:#f8f9fb;border-bottom:1px solid #e6e8ec;font-weight:600;font-size:13px;color:#34445a;}
+  .inspect-row{display:grid;grid-template-columns:minmax(290px, 1.2fr) minmax(300px, 1fr);align-items:center;gap:14px;padding:12px 15px;border-bottom:1px solid #eef0f3;}
+  .inspect-row:last-child{border-bottom:0;}
+  .inspect-row.sub{padding-left:35px;background:#fcfcfc;}
+  .inspect-row .question-label{margin:0;font-weight:500;line-height:1.65;}
+  .inspect-row .pills{justify-content:flex-start;}
+  .inspect-row .pill span{min-width:48px;text-align:center;}
+  .inspect-row .report-field{max-width:420px;}
+  .inspect-row .field-pair{display:flex;gap:8px;align-items:center;}
+  .inspect-row .field-pair input{width:min(180px,100%);height:34px;border:1px solid #e1e1e1;padding:0 10px;border-radius:2px;}
+  .inspect-choices{padding:12px 15px;display:flex;flex-direction:column;gap:9px;align-items:flex-start;}
+  .inspect-choices .pill span{border-radius:16px;text-align:left;}
+  .inspect-choice-row{padding:12px 15px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+  .inspect-choice-row .pill span{border-radius:16px;}
+  .inspect-group-caption{padding:10px 15px;font-size:12px;font-weight:600;background:#fbfcfd;border-bottom:1px solid #eef0f3;}
+  .inspect-simple-fields{padding:14px 15px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}
+  .inspect-simple-fields .report-field{min-width:0;}
+  .inspect-simple-fields .field-pair{display:flex;align-items:center;gap:8px;}
+  .inspect-simple-fields .field-pair input{min-width:0;flex:1;}
+  .inspect-note{padding:12px 15px;}
+  .inspect-note textarea{width:100%;min-height:78px;padding:10px;border:1px solid #e1e1e1;border-radius:2px;font:inherit;resize:vertical;}
+  .inspect-unit{font-size:12px;color:#667487;white-space:nowrap;}
+  .inline-text{width:min(550px,100%);height:34px;border:1px solid #e1e1e1;border-radius:2px;padding:0 10px;font:inherit;}
+  .inspect-section-stack{display:flex;flex-direction:column;gap:7px;}
+  .report-air #report-basic-grid{align-items:end;}
+  .report-air #r-gunNo-wrap{justify-content:flex-end;}
+  .report-air #r-gunNo-label{margin:0 0 1px;font-size:12px;font-weight:600;}
+  .report-air #r-caseName-wrap{grid-column:span 4;}
+  .report-air #r-unit-wrap{grid-column:span 3;}
+  .report-air #r-tester-wrap{grid-column:span 3;}
+  .report-air #r-gunNo-wrap{grid-column:span 2;}
+  .report-air .report-like{max-width:1100px;}
+  @media(max-width:900px){.inspect-row{grid-template-columns:1fr;gap:7px;}.inspect-simple-fields{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media(max-width:700px){.inspect-row{padding:11px;}.inspect-row.sub{padding-left:18px;}.inspect-simple-fields{grid-template-columns:1fr;}.report-air #r-caseName-wrap,.report-air #r-unit-wrap,.report-air #r-tester-wrap,.report-air #r-gunNo-wrap{grid-column:span 2;}}
+
+  /* 視覺易讀性調整：延用 CIB 藍白樣式，僅統一置中、字級與選取回饋。 */
+  html { font-size:15px; }
+  body { padding:16px 14px 32px; line-height:1.5; }
+  .panel { width:100%; max-width:1520px; margin-left:auto; margin-right:auto; }
+  .panel-head { font-size:18px; font-weight:600; min-height:55px; height:auto; padding-block:12px; }
+  .panel-body { padding:26px 27px 30px; }
+  .field label, .report-field label, .report-field .label { font-size:14px; line-height:1.45; }
+  .field input, .field select, .search-right input,
+  .form-grid .field input, .form-grid .field select,
+  .report-field input, .report-field select, .report-field textarea {
+    min-height:39px; font-size:15px; border-color:#d4dbe2;
+  }
+  .date-input .calendar { height:39px; min-height:39px; }
+  .btn { min-height:39px; padding:7px 14px; font-size:14px; }
+  .btn.small { min-height:36px; padding:6px 12px; }
+  .btn.white { min-height:35px; }
+  .search-right { font-size:14px; }
+  .search-right input { height:36px; }
+  table, thead th { font-size:13px; }
+  th, td { padding:9px 10px; line-height:1.5; }
+  tbody td { height:42px; }
+  .center input[type=checkbox] { width:17px; height:17px; }
+  .case-count { font-weight:700; }
+  .case-row.open, .case-row.active-case { background:#d5e8f8 !important; box-shadow:inset 4px 0 0 #168dcc; }
+  .gun-row.active-gun { background:#e3f2ff !important; box-shadow:inset 4px 0 0 #198fcc; }
+  .gun-row.active-gun .gun-link { color:#075a91; font-weight:700; }
+  .editor-body { padding:28px 28px 30px; }
+  .report-body { max-width:1360px; margin-inline:auto; padding:26px 28px 32px; }
+  .report-section-title { font-size:17px; margin-top:19px; margin-bottom:14px; }
+  .report-subhead { font-size:15px; }
+  .report-like, .report-air .report-like { width:100%; max-width:none; margin:10px auto 19px; }
+  .report-like-title { font-size:15px; padding:12px 16px; background:#f6f9fc; }
+  .question-label, .inspect-row .question-label { font-size:14px; line-height:1.65; }
+  .inspect-group-caption { font-size:14px; }
+  .inspect-row { gap:18px; padding:14px 17px; }
+  .inspect-row.sub { padding-left:38px; }
+  .inspect-choices, .inspect-choice-row { gap:10px; padding:14px 17px; }
+  .pills { gap:8px; }
+  .pill span {
+    font-size:14px; line-height:1.45; min-height:36px;
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:7px 14px; border-width:1.5px; border-color:#cfd7e0;
+    color:#4e6074; background:#fff; font-weight:500;
+    transition:background-color .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .pill:hover span { background:#eef7fe; color:#0c669f; border-color:#76b8e5; }
+  .pill input:checked + span {
+    background:#168dcc; color:#fff; border-color:#0c75b4;
+    font-weight:700; box-shadow:0 1px 3px rgba(0,75,130,.21);
+  }
+  .pill:has(input:checked):hover span { background:#0d80bd; color:#fff; }
+  .pill input:focus-visible + span { outline:3px solid #5daff0; outline-offset:3px; }
+  .pill input:disabled + span { opacity:.5; cursor:not-allowed; }
+  .inspect-unit, .tip, .edit-note, .editor-banner { font-size:13px; }
+  .inline-text, .inspect-row .field-pair input { min-height:39px; font-size:15px; }
+  .photo-tile { font-size:13px; }
+  .photo-tile-head, .photo-tile .caption-preview { font-size:12px; }
+  .photo-tile .drag-handle { min-height:30px; }
+  .viewer-title strong { font-size:16px; }
+  .viewer-caption { font-size:14px; }
+  .viewer-tools .btn { font-size:13px; min-height:34px; }
+  .viewer-tools .btn.active { background:#168dcc; border-color:#0c75b4; color:#fff; font-weight:700; }
+  .viewer-caption textarea { font-size:14px; }
+  .field input:focus, .field select:focus, .search-right input:focus,
+  .form-grid .field input:focus, .form-grid .field select:focus,
+  .report-field input:focus, .report-field select:focus, .report-field textarea:focus,
+  .viewer-caption textarea:focus, .inspect-row .field-pair input:focus {
+    outline:0; border-color:#168dcc; box-shadow:0 0 0 3px rgba(22,141,204,.18);
+  }
+  @media (max-width:1250px) {
+    .panel { max-width:100%; }
+    .report-body { max-width:100%; }
+  }
+  @media (max-width:700px) {
+    body { padding:9px 6px 20px; }
+    .panel-body,.editor-body,.report-body { padding:18px 13px 22px; }
+    .panel-head { font-size:17px; padding:11px 14px; }
+    .report-section-title { font-size:16px; }
+    .inspect-row { padding:12px 11px; gap:8px; }
+    .inspect-row.sub { padding-left:18px; }
+    .pill span { font-size:13px; min-height:36px; padding:7px 11px; }
+  }
+  @media print { body { padding:0; } }
+
+  /* 左右並排僅限下方輸入區；查詢與案件列表不改版。 */
+  .edit-workspace{width:100%;max-width:1520px;margin:13px auto 0;display:grid;
+    grid-template-columns:minmax(0, 43fr) minmax(0, 57fr);gap:14px;align-items:start;}
+  .edit-workspace>.editor-panel{width:100%;max-width:none;margin:0;min-width:0;}
+  .edit-workspace>.editor-panel .panel-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;}
+  .panel-subtitle{font-size:12px;font-weight:500;color:#5a7795;}
+  .edit-workspace #case-panel{border-top:4px solid #4e9fd2;}
+  .edit-workspace #report-panel{border-top:4px solid #8facc8;}
+  .edit-workspace #case-panel .panel-head{background:#eef7fd;}
+  .edit-workspace #report-panel .panel-head{background:#f5f7fa;}
+  .edit-context{grid-column:1/-1;padding:13px 17px;min-height:51px;border:1px solid #bddbf0;
+    border-left:5px solid #147caf;border-radius:5px;background:#eaf5fd;display:flex;
+    align-items:center;gap:10px 13px;flex-wrap:wrap;font-size:14px;}
+  .edit-context-flag{font-size:13px;font-weight:700;color:#fff;background:#137fb9;padding:4px 10px;border-radius:3px;white-space:nowrap;}
+  .edit-context strong{color:#1a4568;min-width:0;overflow-wrap:anywhere;}
+  #edit-gun-title{font-weight:700;color:#155782;}
+  .edit-context-divider{color:#a7bfd2;}
+  .edit-context-status{background:#e0f5e9;border:1px solid #b6dfc8;color:#246b47;
+    margin-left:auto;font-size:12px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap;}
+  .edit-context-status.unsaved{background:#fff3d9;color:#8a5b0d;border-color:#f4d7a2;}
+  .editing-badge{display:inline-flex;flex:none;background:#0c75b4;color:#fff;border-radius:3px;
+    padding:2px 6px;font-size:11px;font-weight:700;white-space:nowrap;line-height:1.45;}
+  .editing-gun-mark{margin-left:5px;color:#076cab;font-size:12px;}
+  tbody tr.case-row.active-case{background:#c7e2f8!important;box-shadow:inset 5px 0 0 #0873b8;}
+  tbody tr.case-row.active-case td:nth-child(2){font-weight:800;color:#0d527b;}
+  tbody tr.case-row.active-case .case-count{color:#006eac;}
+  tbody tr.gun-row.active-gun{background:#dff1ff!important;box-shadow:inset 5px 0 0 #168dcc;}
+  tbody tr.gun-row.active-gun .gun-id a{font-weight:800;color:#075986;}
+  .case-form-groups{display:flex;flex-direction:column;gap:17px;}
+  .case-field-group{padding:14px 15px 17px;border:1px solid #d8e4ed;border-radius:5px;min-width:0;}
+  .case-shared{background:#f4f9fe;border-color:#d3e7f8;}
+  .gun-specific{background:#fafbfc;border-color:#e1e5ea;}
+  .field-group-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    margin:0 0 15px;padding:0 0 9px;border-bottom:1px solid #dbe5ed;flex-wrap:wrap;}
+  .field-group-title strong{color:#245577;font-size:15px;}
+  .field-group-title span{color:#718598;font-size:12px;}
+  .group-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 15px;}
+  .group-fields>.field{min-width:0;}
+  .edit-workspace .editor-body{padding:17px 17px 23px;}
+  .edit-workspace .report-body{padding:15px 17px 24px;max-width:none;}
+  .edit-workspace .report-grid{gap:11px 10px;}
+  .edit-workspace .report-like{max-width:none;}
+  .edit-workspace .inspect-row{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:10px;padding:12px 13px;}
+  .edit-workspace .inspect-row.sub{padding-left:22px;}
+  .edit-workspace .inspect-choices,.edit-workspace .inspect-choice-row{padding:12px 13px;}
+  .edit-workspace .report-section-title{margin-top:15px;}
+  .edit-workspace .photo-gallery{gap:10px;}
+  @media(max-width:1320px){.edit-workspace{grid-template-columns:1fr;}.group-fields{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .edit-workspace .inspect-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}}
+  @media(max-width:900px){.group-fields{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .edit-workspace .inspect-row{grid-template-columns:1fr;}}
+  @media(max-width:600px){.edit-workspace{gap:9px;}.edit-context{gap:6px;padding:9px 10px;}
+    .edit-context-status{margin-left:0;}.group-fields{grid-template-columns:1fr;}
+    .case-field-group{padding:12px 10px;}.edit-workspace .editor-body,.edit-workspace .report-body{padding:13px 11px 18px;}}
+
+  /* 版面修正：案件新增與編輯恢復全寬 6 欄；只有初篩報告內部左右並排。 */
+  .edit-workspace { grid-template-columns:minmax(0,1fr); gap:13px; }
+  .edit-workspace > .editor-panel { grid-column:1; }
+  .edit-workspace #case-panel { border-top:0; }
+  .edit-workspace #case-panel .panel-head { background:#fff; }
+  .edit-workspace #report-panel { border-top:0; }
+  .edit-workspace #report-panel .panel-head { background:#fff; }
+  .edit-workspace .editor-body { padding:28px 28px 30px; }
+  .edit-workspace .form-grid { grid-template-columns:repeat(6,minmax(0,1fr)); gap:18px 20px; }
+  .edit-workspace .form-grid > .field { min-width:0; }
+  .edit-workspace .report-body { padding:26px 28px 32px; max-width:none; }
+  .report-detail-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:18px; align-items:start; }
+  .report-detail-grid > * { min-width:0; }
+  .report-inspection-pane > .report-section-title:first-child,
+  .report-photo-pane > .report-section-title:first-child { margin-top:0; }
+  .report-photo-pane { border:1px solid #e0e8ee; border-radius:4px; background:#f9fbfd; padding:15px 16px 20px; }
+  .report-photo-pane .photo-block { margin-top:13px; }
+  .report-photo-pane .photo-gallery { gap:10px; padding:10px; }
+  .report-photo-pane .photo-tile { width:calc(50% - 5px); max-width:calc(50% - 5px); }
+  .report-photo-pane .photo-tile img { height:116px; }
+  .report-photo-pane .photo-toolbar { gap:7px; }
+  .report-photo-pane .tip { line-height:1.55; }
+  @media(min-width:1201px) {
+    .report-detail-grid { grid-template-columns:minmax(0, 1.25fr) minmax(0, .75fr); gap:20px; }
+    .report-inspection-pane .inspect-row { grid-template-columns:minmax(0, 1.05fr) minmax(0, 1fr); }
+  }
+  @media(max-width:1250px) {
+    .edit-workspace .form-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  }
+  @media(max-width:800px) {
+    .edit-workspace .form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:13px; }
+    .edit-workspace .report-body, .edit-workspace .editor-body { padding:18px 14px 22px; }
+    .report-photo-pane { padding:12px; }
+  }
+  @media(max-width:480px) {
+    .edit-workspace .form-grid { grid-template-columns:minmax(0,1fr); }
+    .report-photo-pane .photo-tile { width:calc(50% - 5px); }
+  }
+</style>
+</head>
+<body>
+<main class="panel list-panel">
+  <div class="panel-head">槍枝性能檢測</div>
+  <div class="panel-body">
+    <form id="filters" class="filters" autocomplete="off">
+      <div class="field"><label for="no-filter">初鑑單號/流水碼</label><input id="no-filter" placeholder="請輸入流水碼"></div>
+      <div class="field"><label for="case-filter">案由</label><input id="case-filter" placeholder="請輸入案由"></div>
+      <div class="field"><label for="region-filter">查獲單位</label><select id="region-filter"><option value=""></option><option value="臺中市政府警察局">臺中市政府警察局</option></select></div>
+      <div class="field blank"><label for="unit-filter">單位</label><select id="unit-filter"><option value=""></option><option value="刑事警察大隊">刑事警察大隊</option><option value="清水分局">清水分局</option><option value="少年警察隊">少年警察隊</option></select></div>
+      <div class="field"><label for="type-filter">槍枝種類</label><select id="type-filter"><option value=""></option><option value="空氣">空氣</option><option value="火藥">火藥</option><option value="魚槍">魚槍</option><option value="模擬槍">模擬槍</option></select></div>
+      <div class="field"><label for="date-start">性能檢測日期起</label><div class="date-input"><span class="calendar" aria-hidden="true">▦</span><input id="date-start" placeholder="YYYMMDD" inputmode="numeric" maxlength="7" pattern="[0-9]*"></div></div>
+      <div class="field date-end"><label for="date-end">性能檢測日期迄</label><div class="date-input"><span class="calendar" aria-hidden="true">▦</span><input id="date-end" placeholder="YYYMMDD" inputmode="numeric" maxlength="7" pattern="[0-9]*"></div></div>
+      <div class="filter-actions"><button class="btn primary" type="submit">查詢</button><button class="btn gray" id="print-btn" type="button">槍枝標籤列印</button></div>
+    </form>
+    <div class="toolbar">
+      <button id="new-btn" class="btn white" type="button">新增</button>
+      <label class="search-right" for="quick-search">搜尋: <input id="quick-search" type="search" aria-label="搜尋案件或槍枝"></label>
+    </div>
+    <div class="table-wrap">
+      <table aria-label="槍枝性能檢測案件列表">
+        <colgroup><col style="width:4%"><col style="width:10.2%"><col style="width:5.6%"><col style="width:7.1%"><col style="width:12.5%"><col style="width:17%"><col style="width:6.3%"><col style="width:5.6%"><col style="width:4.5%"><col style="width:18.5%"><col style="width:8.7%"></colgroup>
+        <thead><tr><th aria-label="選取"></th><th>初鑑單號</th><th>槍枝編號</th><th>初鑑<br>日期</th><th>查獲單位</th><th>案由</th><th>承辦人</th><th>槍枝<br>種類</th><th>管<br>制</th><th>建立單位人</th><th>已掛單之送鑑案號</th></tr></thead>
+        <tbody id="list-body"></tbody>
+      </table>
+    </div>
+    <div id="pager" class="pager" aria-label="分頁"></div>
+  </div>
+</main>
+<div class="edit-workspace" id="edit-workspace">
+  <div class="edit-context" aria-live="polite">
+    <span class="edit-context-flag">目前編輯</span>
+    <strong id="edit-case-title">請選擇案件</strong>
+    <span class="edit-context-divider">／</span>
+    <span id="edit-gun-title">請選擇槍枝</span>
+    <span id="edit-mode-indicator" class="edit-context-status">已儲存</span>
+  </div>
+<section class="panel editor-panel" id="case-panel" aria-labelledby="case-heading">
+  <div class="panel-head" id="case-heading">案件新增與編輯</div>
+  <form id="case-editor" autocomplete="off">
+  <div class="editor-body">
+    <div class="form-grid">
+<div class="field"><label for="c-gunNo">槍枝編號</label><input id="c-gunNo" name="GUN_NO" placeholder="請填寫本把槍枝編號"/></div>
+<div class="field"><label for="c-unit">查獲單位<span class="required">*</span></label><select id="c-unit" name="GUN_UNT" required=""><option value="">請選擇</option><option>刑事警察大隊</option><option>清水分局</option><option>少年警察隊</option><option>其他單位</option></select></div>
+<div class="field"><label for="c-getDate">獲案日期<span class="required">*</span></label><div class="date-input"><span aria-hidden="true" class="calendar">▦</span><input id="c-getDate" inputmode="numeric" maxlength="7" name="GUN_GETDATE" placeholder="YYYMMDD" required=""/></div></div>
+<div class="field"><label for="c-date">性能檢測日期<span class="required">*</span></label><div class="date-input"><span aria-hidden="true" class="calendar">▦</span><input id="c-date" inputmode="numeric" maxlength="7" name="GUN_DATE" placeholder="YYYMMDD" required=""/></div></div>
+<div class="field"><label for="c-sender">送鑑人<span class="required">*</span></label><input id="c-sender" name="GUN_SEND" required=""/></div>
+<div class="field"><label for="c-suspect">犯嫌(關係人)<span class="required">*</span></label><input id="c-suspect" name="SS_NM" required=""/></div>
+<div class="field"><label for="c-type">槍枝動力類型<span class="required">*</span></label><select id="c-type" name="GUN_TP" required=""><option value="">請選擇</option><option value="空氣">空氣</option><option value="火藥">火藥</option><option value="魚槍">魚槍</option><option value="模擬槍">模擬槍</option></select></div>
+<div class="field"><label for="c-officer">承辦人<span class="required">*</span></label><input id="c-officer" name="GUN_USR_ID" required=""/></div>
+<div class="field"><label for="c-reviewer">複檢人</label><select id="c-reviewer" name="GUN_USR_ID2"><option value=""></option><option>承辦人甲</option><option>複檢人乙</option><option>審核人丙</option></select></div>
+<div class="field"><label for="c-auditor">審核人</label><select id="c-auditor" name="GUN_USR_ID3"><option value=""></option><option>承辦人甲</option><option>複檢人乙</option><option>審核人丙</option></select></div>
+<div class="field"><label for="c-decision">決行人</label><select id="c-decision" name="GUN_USR_ID4"><option value=""></option><option>承辦人甲</option><option>複檢人乙</option><option>審核人丙</option></select></div>
+<div class="field"><label for="c-cloudNo">雲端治安管制系統案號</label><input id="c-cloudNo" name="NO3"/></div>
+</div>
+  </div>
+  <div class="form-footer"><span class="form-status" id="case-status"></span><button type="button" id="same-case-btn" class="btn white small">同案新增下一把槍</button><button type="submit" class="btn primary small">儲存目前槍枝</button></div>
+  </form>
+</section>
+<section class="panel editor-panel" id="report-panel" aria-labelledby="report-heading">
+  <div class="panel-head" id="report-heading">初篩報告編輯 <span class="panel-subtitle">依報告順序填寫</span></div>
+  <form id="report-editor" autocomplete="off">
+    <div class="report-body">
+      <div class="report-section-title">壹、案件基本資料</div>
+      <div class="report-grid" id="report-basic-grid">
+        <div class="report-field span-4" id="r-caseName-wrap"><label for="r-caseName">一、案由<span class="required">*</span></label><input id="r-caseName" name="CSNM"></div>
+        <div class="report-field span-2" id="r-unit-wrap"><label for="r-unit" id="r-unit-label">二、查獲單位</label><select name="GUN_UNT" id="r-unit" disabled><option value=""></option><option>刑事警察大隊</option><option>清水分局</option><option>少年警察隊</option><option>其他單位</option></select></div>
+        <div class="report-field span-3" id="r-tester-wrap" hidden><label for="r-tester">三、測試人員</label><input id="r-tester" readonly aria-label="測試人員，取自上方案件承辦人"></div>
+        <div class="report-field span-3" id="r-dlvNo-wrap"><label for="r-dlvNo">三、移送書文號</label><input name="DLV_NO" id="r-dlvNo"></div>
+        <div class="report-field span-3" id="r-gunNum-wrap"><label for="r-gunNum">四、證物數量</label><input name="GUN_NUM" id="r-gunNum" inputmode="numeric"></div>
+        <div class="report-field span-6" id="r-gunNo-wrap"><div class="report-subhead" id="r-gunNo-label">貳、槍枝編號</div><input name="GUN_NO" id="r-gunNo" readonly aria-label="槍枝編號"></div>
+        <div class="report-field span-6" id="r-type-wrap"><div class="report-subhead">參、槍枝種類</div><select name="GUN_TP" id="r-type" disabled><option value="">請先選擇槍枝種類</option><option value="空氣">空氣</option><option value="火藥">火藥</option><option value="魚槍">魚槍</option><option value="模擬槍">模擬槍</option></select></div>
+      </div>
+      <div class="report-gap"></div>
+      <div class="report-detail-grid">
+        <div class="report-inspection-pane" aria-label="槍枝檢測項目">
+      <div class="report-section-title" id="report-inspection-title">肆、檢測項目</div>
+      <div id="type-specific" aria-live="polite"></div>
+        </div>
+        <aside class="report-photo-pane" aria-label="槍枝照片管理">
+      <div class="report-section-title appendix-title" id="photo-section-title">伍、附件：照片</div>
+      <div class="photo-block">
+        <div class="photo-toolbar"><div class="report-subhead" style="margin-right:12px">槍枝照片</div><select id="photo-report-type" style="max-width:205px;height:30px;border:1px solid #ddd"><option>性能檢測報告</option><option>空氣槍動能初篩報告</option><option>模擬槍檢視表</option></select></div>
+        <div class="photo-toolbar"><button type="button" id="photo-add" class="btn primary small">☁ 圖片上傳</button><button type="button" id="photo-edit" class="btn primary small">▣ 照片編輯</button><span class="tip">上傳即加入照片清單；拖曳縮圖上的「排序」把手調整順序，雙擊照片進入大圖編輯</span></div>
+        <input type="file" id="photo-input" accept="image/*" multiple hidden>
+        <div class="photo-gallery" id="photo-gallery" aria-label="槍枝照片清單，支援拖曳排序"></div>
+        <div class="photo-status tip" id="photo-order-status" role="status" aria-live="polite"></div>
+      </div>
+        </aside>
+      </div>
+    </div>
+    <div class="form-footer"><span class="form-status" id="report-status"></span><button type="submit" class="btn primary small">儲存目前槍枝</button></div>
+  </form>
+</section>
+</div><!-- /edit-workspace -->
+<div class="photo-viewer" id="photo-viewer" role="dialog" aria-modal="true" aria-label="照片編輯大圖視窗" hidden>
+  <div class="viewer-window">
+    <div class="viewer-top">
+      <div class="viewer-title"><strong id="viewer-photo-name">照片檢視</strong><small id="viewer-photo-counter">1 / 1</small></div>
+      <button class="viewer-close" id="viewer-close" type="button" title="關閉視窗（Esc）" aria-label="關閉照片檢視">×</button>
+    </div>
+    <div class="viewer-tools">
+      <button class="btn white active" type="button" data-view-mode="pan">拖曳瀏覽</button>
+      <button class="btn white" type="button" data-view-mode="arrow">標記箭頭</button>
+      <button class="btn white" type="button" data-view-mode="point">標記圓點</button>
+      <label class="tip" for="viewer-color">顏色</label><input id="viewer-color" class="viewer-color" type="color" value="#ffff00" aria-label="標記顏色">
+      <span class="tool-separator" aria-hidden="true"></span>
+      <button class="btn white" type="button" id="zoom-out" title="縮小">－</button><span id="zoom-label">100%</span><button class="btn white" type="button" id="zoom-in" title="放大">＋</button>
+      <button class="btn white" type="button" id="zoom-fit">符合視窗</button>
+      <button class="btn white" type="button" id="zoom-actual">1:1</button>
+      <span class="tool-separator" aria-hidden="true"></span>
+      <button class="btn white" type="button" id="mark-undo">復原標記</button>
+      <button class="btn white" type="button" id="mark-clear">清除標記</button>
+    </div>
+    <div class="viewer-stage" id="viewer-stage" aria-label="照片顯示與標記區">
+      <div class="viewer-transform" id="viewer-transform">
+        <img id="viewer-image" alt="目前照片" draggable="false">
+        <svg id="viewer-markup" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      </div>
+    </div>
+    <div class="viewer-bottom">
+      <label class="viewer-caption" for="viewer-caption">照片說明文字
+        <textarea id="viewer-caption" rows="2" placeholder="輸入這張照片的說明（切換照片會自動保留）"></textarea>
+      </label>
+      <div class="viewer-pager"><button class="btn white" id="viewer-prev" type="button">〈 上一張</button><span class="tip" id="viewer-bottom-counter">1 / 1</span><button class="btn white" id="viewer-next" type="button">下一張 〉</button></div>
+      <div class="viewer-hint">滑鼠滾輪縮放（以游標為中心） · 拖曳移動畫面 · 選擇標記模式後在照片上拖拉畫箭頭或點選圓點 · 鍵盤 ← → 切換照片、Esc 關閉</div>
+    </div>
+  </div>
+</div>
+<div class="print-only" id="print-output"></div>
+<script>
+'use strict';
+const records = [
+  ['G115000159','2','1151118','刑事警察大隊','111涉嫌違反槍砲彈刀械管制條例','123','空氣','','刑事鑑識中心 董澤','115110801103'],
+  ['G115000158','1','1151118','刑事警察大隊','111涉嫌違反槍砲彈刀械管制條例及恐嚇案','123','火藥','是','刑事鑑識中心 董澤','115110801103'],
+  ['G115000154','1','1151116','刑事警察大隊','123涉嫌違反槍砲彈刀械管制條例','ABC','火藥','?','刑事鑑識中心 曾品祥','115110801003'],
+  ['G115000153','1','1151116','清水分局','456涉嫌違反槍砲彈刀械管制條例','123','空氣','','清水分局 周燕根',''],
+  ['G115000152','2','1151116','刑事警察大隊','1116涉嫌違反槍砲彈刀械管制條例及恐嚇案','123','空氣','','刑事鑑識中心 董澤','115110800803'],
+  ['G115000151','1','1151116','刑事警察大隊','1116涉嫌違反槍砲彈刀械管制條例及恐嚇案','123','火藥','是','刑事鑑識中心 董澤','115110800803'],
+  ['G115000150','','1151116','刑事警察大隊','01涉嫌違反槍砲彈刀械管制條例','123','火藥','是','刑事鑑識中心 董澤','115110800703'],
+  ['G115000149','2','1151113','少年警察隊','13涉嫌違反槍砲彈刀械管制條例','123','空氣','','刑事鑑識中心 董澤',''],
+  ['G115000148','1','1151113','刑事警察大隊','123涉嫌違反槍砲彈刀械管制條例','123','火藥','是','刑事鑑識中心 董澤',''],
+  ['G115000146','2','1151113','少年警察隊','222涉嫌違反槍砲彈刀械管制條例','123','空氣','','刑事鑑識中心 謝雨致','115110800403'],
+  // 第二頁僅供分頁操作示範，不代表 CIB 真實案件。
+  ['DEMO-001','1','1151112','刑事警察大隊','示範案件：槍砲彈藥管制','示範','火藥','','示範單位','DEMO-CASE-A'],
+  ['DEMO-002','2','1151112','刑事警察大隊','示範案件：槍砲彈藥管制','示範','空氣','','示範單位','DEMO-CASE-A'],
+  ['DEMO-003','1','1151111','清水分局','示範案件：槍枝初鑑','示範','空氣','','示範單位','DEMO-CASE-B'],
+].map(([id,gunNo,date,unit,caseName,officer,type,controlled,creator,linkedCase])=>({id,gunNo,date,unit,caseName,officer,type,controlled,creator,linkedCase}));
+
+const expanded = new Set(), selected = new Set();
+let groups = [], filtered = [], currentPage = 1, activeId = null, draft = null;
+let editingRecord = null, activeCaseKey = null, editDirty = false;
+let selectedPhotoId = null;
+const view = {open:false, recordId:null, photoId:null, mode:'pan', scale:1, tx:0, ty:0, w:0, h:0, pointer:null, preview:null, lastFocus:null};
+const AUTO_CASE_SUFFIX = '涉嫌違反槍砲彈藥刀械管制條例案';
+const pageSize = 8;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fields = ['GUN_NO','GUN_UNT','GUN_GETDATE','GUN_DATE','GUN_SEND','SS_NM','GUN_TP','GUN_USR_ID','GUN_USR_ID2','GUN_USR_ID3','GUN_USR_ID4','NO3'];
+const caseKeys = {GUN_NO:'gunNo',GUN_UNT:'unit',GUN_GETDATE:'getDate',GUN_DATE:'date',GUN_SEND:'sender',SS_NM:'suspect',GUN_TP:'type',GUN_USR_ID:'officer',GUN_USR_ID2:'reviewer',GUN_USR_ID3:'auditor',GUN_USR_ID4:'decision',NO3:'cloudNo'};
+for (const r of records) {r.getDate ||= r.date; r.sender ??= '';r.suspect ??= '';r.reviewer ??= '';r.auditor ??= '';r.decision ??= '';r.cloudNo ??= '';r.report ??= {};r.photos ??= [];r.autoCaseName ??= false;r.lastAutoCaseName ??= '';}
+function suggestCaseName(r){
+  if(!r)return;
+  const suspect=$('c-suspect').value.trim();
+  const generated=suspect ? suspect + AUTO_CASE_SUFFIX : '';
+  const previous=r.lastAutoCaseName || '';
+  const shown=$('r-caseName').value.trim();
+  // 只有原本空白、或原值就是先前系統產生的案由，才自動更新；手動改過的案由不覆寫。
+  if(shown && shown!==previous && !(r.autoCaseName && shown===r.caseName)) return;
+  if(r.caseName && r.caseName!==previous && !r.autoCaseName)return;
+  r.autoCaseName=true;
+  r.lastAutoCaseName=generated;
+  r.suspect=suspect;
+  r.caseName=generated;
+  r.report ??={};r.report.CSNM=generated;
+  $('r-caseName').value=generated;
+}
+
+function groupKey(r){return r.groupOverride || (r.linkedCase ? 'linked-'+r.linkedCase : 'unlinked-'+r.id);}
+function buildGroups(rows){
+  const map = new Map();
+  for(const gun of rows){const key=groupKey(gun);if(!map.has(key))map.set(key,{key,linkedCase:gun.linkedCase||'',guns:[]});map.get(key).guns.push(gun);}
+  return [...map.values()];
+}
+function refreshGroups(){groups=buildGroups(records);}
+function first(g){return g.guns[0];}
+function valueCells(g){
+  const r=first(g),types=[...new Set(g.guns.map(x=>x.type))];
+  return `<td class="case-count">共 ${g.guns.length} 把</td><td>${esc(r.date)}</td><td>臺中市政府警察局 / ${esc(r.unit)}</td><td>${esc(r.caseName)}</td><td>${esc(r.officer)}</td><td>${esc(types.join('、'))}</td><td>${esc(g.guns.length===1?r.controlled:(g.guns.some(x=>x.controlled==='是')?'是':''))}</td><td>臺中市政府警察局 / ${esc(r.creator)}</td><td>${esc(g.linkedCase)}</td>`;
+}
+function render(){
+  const lastPage=Math.max(1,Math.ceil(filtered.length/pageSize));currentPage=Math.min(Math.max(currentPage,1),lastPage);
+  const slice=filtered.slice((currentPage-1)*pageSize,currentPage*pageSize);
+  if(!slice.length){$('list-body').innerHTML='<tr><td colspan="11" class="single-cell">查無符合條件的案件</td></tr>';}
+  else $('list-body').innerHTML=slice.map(g=>{
+    const open=expanded.has(g.key),allSelected=g.guns.every(x=>selected.has(x.id));
+    const top=`<tr class="case-row ${open?'open':''} ${g.key===activeCaseKey?'active-case':''}" data-case="${esc(g.key)}" aria-expanded="${open}" title="點選可${open?'收合':'展開'}本案 ${g.guns.length} 把槍枝"><td class="center"><input type="checkbox" data-check-case="${esc(g.key)}" aria-label="選取案件全部槍枝" ${allSelected?'checked':''}></td><td><div class="case-id"><button type="button" class="chevron" data-toggle="${esc(g.key)}" aria-label="${open?'收合':'展開'}本案槍枝" aria-expanded="${open}"></button><span class="case-num-text">${esc(first(g).id)}${g.guns.length>1?' 等':''}</span></div></td>${valueCells(g)}</tr>`;
+    const children=open?g.guns.map(r=>`<tr class="gun-row ${r.id===activeId?'active-gun':''}" data-child="${esc(g.key)}"><td class="center child-marker"><input type="checkbox" data-check-gun="${esc(r.id)}" aria-label="選取槍枝 ${esc(r.id)}" ${selected.has(r.id)?'checked':''}></td><td><span class="gun-id"><a class="gun-link" href="#case-panel" data-open-gun="${esc(r.id)}">${esc(r.id)}</a>${r.id===activeId?'<span class="editing-gun-mark" title="目前編輯的槍枝">●</span>':''}</span></td><td>${esc(r.gunNo)}</td><td>${esc(r.date)}</td><td>臺中市政府警察局 / ${esc(r.unit)}</td><td>${esc(r.caseName)}</td><td>${esc(r.officer)}</td><td>${esc(r.type)}</td><td>${esc(r.controlled)}</td><td>臺中市政府警察局 / ${esc(r.creator)}</td><td>${esc(r.linkedCase)}</td></tr>`).join(''):'';
+    return top+children;
+  }).join('');
+  let pager=`<button class="page-btn" type="button" data-page="prev" ${currentPage===1?'disabled':''}>〈</button>`;
+  for(let i=1;i<=lastPage;i++)pager+=`<button class="page-btn ${currentPage===i?'active':''}" type="button" data-page="${i}" aria-current="${currentPage===i?'page':'false'}">${i}</button>`;
+  pager+=`<button class="page-btn" type="button" data-page="next" ${currentPage===lastPage?'disabled':''}>〉</button>`;
+  $('pager').innerHTML=pager;
+}
+function applyFilters(resetPage=true){
+  const no=$('no-filter').value.trim().toLowerCase(),name=$('case-filter').value.trim().toLowerCase(),region=$('region-filter').value,unit=$('unit-filter').value,type=$('type-filter').value,from=$('date-start').value.trim(),to=$('date-end').value.trim(),quick=$('quick-search').value.trim().toLowerCase();
+  filtered=groups.filter(g=>g.guns.some(r=>{
+    const all=[r.id,r.gunNo,r.date,r.unit,r.caseName,r.officer,r.type,r.controlled,r.creator,r.linkedCase].join(' ').toLowerCase();
+    return (!no||(r.id+' '+r.gunNo+' '+r.linkedCase).toLowerCase().includes(no))&&(!name||r.caseName.toLowerCase().includes(name))&&(!region||r.unit.length>0)&&(!unit||r.unit===unit)&&(!type||r.type===type)&&(!from||r.date>=from)&&(!to||r.date<=to)&&(!quick||all.includes(quick));
+  }));if(resetPage)currentPage=1;render();
+}
+function getCurrent(){return draft || editingRecord || null;}
+function setStatus(id,message,good=false){$(id).textContent=message;$(id).classList.toggle('success',good);}
+const sharedCaseKeys=['unit','getDate','sender','suspect','cloudNo'];
+function canLeaveEditor(){
+  return !editDirty || confirm('目前這把槍有尚未儲存的修改。\n要放棄修改並切換嗎？');
+}
+function markDirty(){
+  if(!getCurrent())return;
+  editDirty=true;
+  $('edit-mode-indicator').textContent='尚未儲存';
+  $('edit-mode-indicator').classList.add('unsaved');
+}
+function renderEditContext(r){
+  const g=groups.find(x=>x.key===activeCaseKey);
+  const count=g?.guns.length||0;
+  const targetCase=r?.caseName?.trim()||g?.guns[0]?.caseName||'新案件';
+  $('edit-case-title').textContent=r?.id || activeCaseKey ? `案件：${targetCase}` : '新增案件';
+  const number=count+1;
+  $('edit-gun-title').textContent=r?.id
+    ? `槍枝編號 ${r.gunNo||'未填'} · 初鑑單號 ${r.id} · 案內共 ${Math.max(1,count)} 把`
+    : `新增第 ${number} 把槍枝${r?.gunNo?' · 建議編號 '+r.gunNo:''}（尚未儲存）`;
+  $('edit-mode-indicator').textContent=editDirty||draft?'尚未儲存':'已儲存';
+  $('edit-mode-indicator').classList.toggle('unsaved',!!(editDirty||draft));
+}
+function updateCaseForm(r){
+  const f=$('case-editor');for(const name of fields)f.elements[name].value=r[caseKeys[name]]??'';
+  setStatus('case-status',r.id?'目前編輯：'+r.id:'新槍枝尚未儲存，請先完成基本資料');
+  $('same-case-btn').disabled=!r.id;
+  renderEditContext(r);
+}
+function readCaseForm(r){const f=$('case-editor');for(const name of fields)r[caseKeys[name]]=f.elements[name].value.trim();return r;}
+function newDraft(data={}){
+  return {id:'',gunNo:'',date:'1151118',getDate:'1151118',unit:'',caseName:'',officer:'',sender:'',suspect:'',reviewer:'',auditor:'',decision:'',cloudNo:'',type:'空氣',creator:'示範單位',linkedCase:'',controlled:'',report:{},photos:[],autoCaseName:false,lastAutoCaseName:'',...data};
+}
+function nextDemoId(){let n=1;while(records.some(r=>r.id==='DEMO-'+String(n).padStart(3,'0')))n++;return 'DEMO-'+String(n).padStart(3,'0');}
+function loadRecord(id,scroll=false){
+  const r=records.find(x=>x.id===id);if(!r)return false;
+  if((activeId!==id||draft)&&!canLeaveEditor())return false;
+  if(view.open)closePhotoViewer();
+  activeId=id;activeCaseKey=groupKey(r);draft=null;editingRecord=structuredClone(r);editDirty=false;
+  expanded.add(activeCaseKey);
+  updateCaseForm(editingRecord);renderReport(editingRecord);render();
+  if(scroll)$('edit-workspace').scrollIntoView({behavior:'smooth',block:'start'});
+  return true;
+}
+function startNewCase(){
+  if(!canLeaveEditor())return;
+  if(view.open)closePhotoViewer();
+  activeId=null;activeCaseKey=null;editingRecord=null;draft=newDraft();editDirty=true;
+  updateCaseForm(draft);renderReport(draft);render();
+  $('edit-workspace').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function startSameCase(){
+  const current=getCurrent();
+  if(!current?.id){setStatus('case-status','請先儲存目前這把槍，才能新增下一把');return;}
+  // 複製前先儲存剛剛的修改，確保帶入的是上一把槍最新的資料。
+  if(editDirty && !saveCurrent()){
+    setStatus('case-status','請先完成必要欄位並儲存，才能新增下一把');return;
+  }
+  const src=records.find(r=>r.id===activeId);if(!src)return;
+  const caseKey=groupKey(src);
+  const g=groups.find(x=>x.key===caseKey);
+  const nums=(g?.guns||[]).map(x=>Number(x.gunNo)).filter(n=>Number.isInteger(n)&&n>0);
+  const nextGunNo=String((nums.length?Math.max(...nums):0)+1);
+  if(view.open)closePhotoViewer();
+
+  // 複製上一把的「全部內容」，包含日期、人員、案由、報告欄位、
+  // 檢測答案、照片、說明和標記。只重設槍枝編號／種類及系統識別碼。
+  // structuredClone 使兩把槍的檢測內容與標記後續可分別編輯。
+  const next=structuredClone(src);
+  next.id='';
+  next.gunNo=nextGunNo; // 建議下一個編號，並非沿用上一把，可自行修改
+  next.type='';         // 每把槍的種類必須重新選擇
+  next.groupOverride=caseKey;
+  next.copiedSourceType=src.type;
+  next.report??={};
+  next.report.GUN_NO=next.gunNo;
+  next.report.GUN_TP='';
+  // 每張照片需有獨立的項目 ID；影像 URL 暫共用同一個本機來源。
+  next.photos=(next.photos||[]).map((p,i)=>({
+    ...p,id:'ph-copy-'+Date.now()+'-'+i+'-'+Math.random().toString(36).slice(2)
+  }));
+
+  activeId=null;editingRecord=null;activeCaseKey=caseKey;draft=next;editDirty=true;
+  selectedPhotoId=draft.photos[0]?.id||null;
+  expanded.add(activeCaseKey);
+  updateCaseForm(draft);renderReport(draft);render();
+  $('edit-workspace').scrollIntoView({behavior:'smooth',block:'start'});
+  setStatus('case-status',
+    '已複製上一把的所有資料（含檢測答案、照片、說明及標記）；編號已建議下一號，請重新選擇槍種並核對資料。');
+  setStatus('report-status','尚未儲存新槍枝；若更換不同槍種，會清除不適用的檢測答案。');
+}
+function saveCurrent(e){
+  if(e)e.preventDefault();
+  if(!$('case-editor').reportValidity()){
+    setStatus('case-status','請先完成案件基本資料的必填欄位');return false;
+  }
+  const r=getCurrent();if(!r)return false;
+  const wasNew=!!draft;
+  readCaseForm(r);
+  if(!/^\d{7}$/.test(r.getDate)||!/^\d{7}$/.test(r.date)){
+    setStatus('case-status','日期請輸入 7 碼民國年月日');return false;
+  }
+  // Treat both save buttons as one operation. Keep type-specific reports per gun.
+  const reportValues=Object.fromEntries(new FormData($('report-editor')).entries());
+  r.report={...r.report,...reportValues};
+  r.caseName=$('r-caseName').value.trim();
+  if(!r.caseName&&r.suspect){
+    r.caseName=r.suspect+AUTO_CASE_SUFFIX;r.autoCaseName=true;r.lastAutoCaseName=r.caseName;
+    $('r-caseName').value=r.caseName;
+  }
+  r.report.CSNM=r.caseName;
+  r.report.DLV_NO=$('r-dlvNo').value.trim();
+  r.report.GUN_NUM=$('r-gunNum').value.trim();
+  if(!r.caseName){setStatus('report-status','請填寫案由');$('r-caseName').focus();return false;}
+  if(wasNew)r.id=nextDemoId();
+  delete r.copiedSourceType; // 複製來源槍種僅在新槍枝尚未儲存時使用
+  const key=groupKey(r);
+  const stored=structuredClone(r);
+  const index=records.findIndex(x=>x.id===stored.id);
+  if(index>=0)records[index]=stored;else records.unshift(stored);
+  // Synchronize genuine case-level fields across this case, not per-gun inspection results.
+  for(const member of records){
+    if(member.id===stored.id||groupKey(member)!==key)continue;
+    for(const field of sharedCaseKeys)member[field]=stored[field];
+    member.caseName=stored.caseName;
+    member.report??={};member.report.CSNM=stored.caseName;
+  }
+  draft=null;activeId=stored.id;editingRecord=structuredClone(stored);activeCaseKey=key;editDirty=false;
+  refreshGroups();expanded.add(key);
+  $('filters').reset();$('quick-search').value='';applyFilters(true);
+  const pageIndex=filtered.findIndex(g=>g.key===key);
+  if(pageIndex>=0)currentPage=Math.floor(pageIndex/pageSize)+1;
+  render();updateCaseForm(editingRecord);renderReport(editingRecord);
+  setStatus('case-status',wasNew?'已新增槍枝（示範資料）':'已儲存目前槍枝（示範資料）',true);
+  setStatus('report-status','案件資料與這把槍的檢測內容已一併儲存',true);
+  return true;
+}
+function pillGroup(name,question,opts,value,required=true){
+  return `<div class="report-question"><span class="question-label">${esc(question)}${required?'<span class="required">*</span>':''}</span><div class="pills">${opts.map(([v,label])=>`<label class="pill"><input type="radio" name="${esc(name)}" value="${esc(v)}" ${String(value??'')===String(v)?'checked':''}><span>${esc(label)}</span></label>`).join('')}</div></div>`;
+}
+const YNO=[['Y','是'],['N','否'],['O','其他']], HAVE=[['Y','有'],['N','無']], RESULTS=[['1','1.槍枝具殺傷力的可能性較大。'],['2','2.槍枝不具殺傷力的可能性較大。'],['3','3.槍枝殺傷力無法鑑判']];
+function textQuestion(name,label,value='',span='span-3',other='') {return `<div class="report-field ${span}"><label for="q-${esc(name)}">${esc(label)}</label><input id="q-${esc(name)}" name="${esc(name)}" value="${esc(value)}" ${other}></div>`;}
+function question(name,text,opts,data,span='span-3'){return `<div class="${span}">${pillGroup(name,text,opts,data[name])}</div>`;}
+function reportBox(title,content){return `<section class="report-like"><div class="report-like-title">${title}</div>${content}</section>`;}
+function lineChoice(label,name,opts,d,sub=false){
+  return `<div class="inspect-row ${sub?'sub':''}"><div class="question-label">${esc(label)}<span class="required">*</span></div><div class="pills">${opts.map(([value,text])=>`<label class="pill"><input type="radio" name="${esc(name)}" value="${esc(value)}" ${String(d[name]??'')===String(value)?'checked':''}><span>${esc(text)}</span></label>`).join('')}</div></div>`;
+}
+function lineInput(label,name,value,unit='',sub=false,placeholder=''){
+ return `<div class="inspect-row ${sub?'sub':''}"><div class="question-label">${esc(label)}</div><div class="field-pair"><input name="${esc(name)}" value="${esc(value??'')}" placeholder="${esc(placeholder)}" aria-label="${esc(label)}"><span class="inspect-unit">${esc(unit)}</span></div></div>`;
+}
+function noteField(label,name,value){return reportBox(label,`<div class="inspect-note"><textarea name="${esc(name)}" aria-label="${esc(label)}" placeholder="請輸入說明">${esc(value??'')}</textarea></div>`);}
+function resultField(d){
+ return reportBox('槍枝性能檢測結果',`<div class="inspect-choices">${RESULTS.map(([value,label])=>`<label class="pill"><input type="radio" name="GUN_VIEW" value="${value}" ${String(d.GUN_VIEW??'')===value?'checked':''}><span>${esc(label)}</span></label>`).join('')}</div><div class="inspect-note"><label class="question-label" for="result-remarks">其他說明／備註</label><textarea id="result-remarks" name="GUN_VIEW_RMK" placeholder="必要時補充說明">${esc(d.GUN_VIEW_RMK??'')}</textarea></div>`);
+}
+function fireFields(d){return `<div class="report-subhead">一、火藥式槍枝</div>
+  ${reportBox('（一）槍枝主要結構是否完整',
+    lineChoice('槍枝主要結構是否完整','GUN_CHECK1',YNO,d)+
+    lineChoice('（1）槍管','GUN_CHECK11',HAVE,d,true)+
+    lineChoice('（2）擊發裝置','GUN_CHECK12',HAVE,d,true)+
+    lineChoice('（3）持握裝置（握把）','GUN_CHECK13',HAVE,d,true))}
+  ${reportBox('（二）槍管為金屬材質且暢通',lineChoice('槍管為金屬材質且暢通','GUN_CHECK2',YNO,d))}
+  ${reportBox('（三）槍枝擊發功能是否可正常運作',lineChoice('槍枝擊發功能是否可正常運作','GUN_CHECK3',YNO,d))}
+  ${resultField(d)}`;
+}
+function fishFields(d){return `<div class="report-subhead">二、魚槍</div>
+  ${reportBox('（一）槍枝主要結構是否完整',
+    lineChoice('槍枝主要結構是否完整','GUN_CHECK1',YNO,d)+
+    lineChoice('（1）槍身','GUN_CHECK11',HAVE,d,true)+
+    lineChoice('（2）金屬箭','GUN_CHECK12',HAVE,d,true)+
+    lineChoice('（3）持握裝置（握把）','GUN_CHECK13',HAVE,d,true))}
+  ${reportBox('（二）槍枝是否具發射機構',
+    lineChoice('槍枝是否具發射機構','GUN_CHECK2',YNO,d)+
+    lineChoice('（1）動力裝置（橡皮或氣體）','GUN_CHECK21',HAVE,d,true)+
+    lineChoice('（2）扳機','GUN_CHECK22',HAVE,d,true))}
+  ${reportBox('（三）槍枝發射功能是否可正常運作',
+    lineChoice('槍枝發射功能是否可正常運作','GUN_CHECK3',YNO,d)+
+    lineChoice('（1）金屬箭可否固定成待擊發狀態','GUN_CHECK31',[['Y','是'],['N','否']],d,true)+
+    lineChoice('（2）扣按扳機可否發射金屬箭','GUN_CHECK32',[['Y','是'],['N','否']],d,true))}
+  ${resultField(d)}`;
+}
+function airPowerRow(heading,opts,d){return `<div class="inspect-group-caption">${heading}</div><div class="inspect-choice-row">${opts.map(([v,label])=>`<label class="pill"><input type="radio" name="AIR_JTP2" value="${v}" ${String(d.AIR_JTP2??'')===v?'checked':''}><span>${esc(label)}</span></label>`).join('')}</div>`;}
+function airFields(d){return `
+  <div class="report-section-title">貳、槍枝檢視</div>
+  ${reportBox('一、測試日期及環境溫度',
+    `<div class="inspect-simple-fields"><div class="report-field"><label>測試日期</label><input id="r-air-testDate" readonly aria-label="測試日期（同案件性能檢測日期）"></div><div class="report-field"><label for="r-air-degree">環境溫度</label><div class="field-pair"><input id="r-air-degree" name="AIR_DEGREE" value="${esc(d.AIR_DEGREE??'')}" inputmode="decimal"><span class="inspect-unit">°C</span></div></div></div>`)}
+  ${reportBox('二、動力模式',
+     airPowerRow('（一）液化氣體式',[['1','小型高壓鋼瓶內之氣體'],['2','外接高壓鋼瓶內之氣體']],d)+
+     airPowerRow('（二）彈簧壓縮式',[['3','壓縮彈簧帶動活塞壓縮氣體'],['4','電能驅動馬達帶動活塞壓縮氣體']],d)+
+     airPowerRow('（三）氣動式',[['5','填充氣體'],['6','預先灌氣'],['7','單次充氣'],['8','多次充氣']],d)+
+     airPowerRow('（四）其他動力式',[['9','其他動力模式']],d)+
+     `<div class="inspect-note"><input name="AIR_JTP2_EXPL" class="inline-text" aria-label="其他動力模式說明" placeholder="其他動力模式說明" value="${esc(d.AIR_JTP2_EXPL??'')}"></div>`)}
+  ${reportBox('三、槍枝情形',
+    lineChoice('槍枝是否可發射彈丸','AIR_STRENGTH2',[['Y','可發射彈丸'],['N','無法發射彈丸'],['O','其他原因無法測試']],d)+
+    lineInput('其他原因說明','AIR_STRENGTH2_EXPL',d.AIR_STRENGTH2_EXPL))}
+  ${reportBox('四、金屬彈丸規格',lineInput('金屬球型彈丸直徑約','AIR_DAMETER',d.AIR_DAMETER,'mm'))}
+  <div class="report-section-title">參、監測板（鋁板）測試結果</div>
+  ${reportBox('監測板（鋁板）測試結果',lineChoice('鋁板測試結果','AIR_STRENGTH',[['N','未貫穿'],['Y','貫穿'],['','未測試']],d))}
+  <div class="report-section-title">肆、備註</div>
+  <div class="report-like"><div class="inspect-note"><textarea name="AIR_MEMO" aria-label="空氣槍備註" placeholder="測試過程、監測板狀況或其他補充說明">${esc(d.AIR_MEMO??'')}</textarea></div></div>
+  `;
+}
+function fakeFields(d){return `<div class="report-subhead">模擬槍檢視表</div><div class="report-grid">
+  ${textQuestion('FAKE_DATE','鑑驗日期',d.FAKE_DATE,'span-2','placeholder="YYYMMDD"')}${textQuestion('FROM_DATE','來文日期',d.FROM_DATE,'span-2','placeholder="YYYMMDD"')}${textQuestion('FROM_NO','來文字號',d.FROM_NO,'span-2')}${textQuestion('FAKE_USR_ID','鑑驗人員',d.FAKE_USR_ID,'span-3')}${textQuestion('CHK_ADDR','鑑驗地點',d.CHK_ADDR,'span-3')}
+  ${question('FAKE_PROFILE','一、槍枝外型',[['1','手槍'],['2','衝鋒槍'],['3','步槍'],['4','獵槍'],['5','其他']],d,'span-12')}
+  ${textQuestion('FAKE_PROFILE_RXPL','其他外觀',d.FAKE_PROFILE_RXPL,'span-6')}
+  ${question('FAKE_21','二、類似真槍之構造：槍身(下機匣)',HAVE,d,'span-6')}
+  ${question('FAKE_22','滑套(上機匣)',HAVE,d,'span-6')}
+  ${question('FAKE_24','槍管',HAVE,d,'span-6')}
+  ${question('FAKE_26','轉輪',HAVE,d,'span-6')}
+  ${question('FAKE_31','三、類似真槍之火藥式擊發機構裝置',HAVE,d,'span-6')}
+  ${question('FAKE_VIEW','檢視結果',[['1','符合一至四檢測項目'],['2','不符合一至四檢測項目'],['3','無法鑑判']],d,'span-12')}
+  ${textQuestion('FAKE_RMK','備註',d.FAKE_RMK,'span-6')}
+  </div><p class="edit-note">模擬槍檢視表仍沿用先前示範欄位，本次對照調整範圍為火藥式槍枝、魚槍與空氣槍。</p>`;}
+function renderReport(r){
+  r.report ??={};r.photos ??=[];
+  const air=r.type==='空氣';
+  $('report-panel').classList.toggle('report-air',air);
+  $('r-dlvNo-wrap').hidden=air;
+  $('r-gunNum-wrap').hidden=air;
+  $('r-type-wrap').hidden=air;
+  $('r-tester-wrap').hidden=!air;
+  $('report-inspection-title').hidden=air;
+  $('r-gunNo-label').textContent=air?'四、槍枝編號':'貳、槍枝編號';
+  $('r-gunNo-wrap').className='report-field '+(air?'span-2':'span-6');
+  $('r-unit-label').textContent=air?'二、查緝單位':'二、查獲單位';
+  $('r-caseName').value=r.report.CSNM??r.caseName??'';
+  $('r-unit').value=r.unit||'';
+  $('r-dlvNo').value=r.report.DLV_NO??'';
+  $('r-gunNum').value=r.report.GUN_NUM??'1';
+  $('r-gunNo').value=r.gunNo||'';
+  $('r-tester').value=r.officer||'';
+  $('r-type').value=r.type||'';
+  const d=r.report;const content=!r.type?'<div class="edit-note">請先在「案件新增與編輯」選擇這把槍的種類，再確認從上一把複製的檢測資料。</div>':r.type==='火藥'?fireFields(d):r.type==='魚槍'?fishFields(d):r.type==='模擬槍'?fakeFields(d):airFields(d);
+  $('type-specific').innerHTML=content;
+  const testDate=$('r-air-testDate');if(testDate)testDate.value=r.date||'';
+  $('photo-section-title').textContent=air?'伍、附件：影像':r.type==='模擬槍'?'附件：照片':'伍、附件：照片';
+  setStatus('report-status',r.id?'目前初鑑單號：'+r.id:'新增紀錄（先儲存上方案件資料）');
+  $('photo-report-type').value=air?'空氣槍動能初篩報告':r.type==='模擬槍'?'模擬槍檢視表':'性能檢測報告';
+  renderPhotos(r);
+}
+function captureReportDraft(e){
+  const r=getCurrent();if(!r)return;
+  const t=e.target;if(!t.name||t.disabled||t.readOnly)return;
+  r.report??={};r.report[t.name]=t.value;
+  if(t.name==='CSNM'){r.caseName=t.value;r.autoCaseName=false;r.lastAutoCaseName='';renderEditContext(r);}
+  markDirty();setStatus('report-status','檢測內容已修改，請按「儲存目前槍枝」');
+}
+function renderPhotos(r){
+  if(!r)return;
+  const photos=r.photos||[];
+  if(!photos.some(p=>p.id===selectedPhotoId))selectedPhotoId=photos[0]?.id||null;
+  $('photo-gallery').innerHTML=photos.length?photos.map((p,i)=>`<div class="photo-tile ${p.id===selectedPhotoId?'is-selected':''}" data-photo="${esc(p.id)}">
+    <div class="photo-tile-head"><span class="photo-position">第 ${i+1} 張</span><button type="button" class="drag-handle" draggable="true" data-photo-drag-handle="${esc(p.id)}" title="拖曳調整照片順序；Alt＋左右方向鍵也可排序" aria-label="拖曳排序第 ${i+1} 張照片">⠿ 排序</button></div>
+    <img src="${esc(p.url)}" draggable="false" data-photo-preview="${esc(p.id)}" alt="${esc(p.name)}" title="雙擊開啟大圖">
+    <div class="photo-filename" title="${esc(p.name)}">${esc(p.name)}</div>
+    <div class="caption-preview" title="${esc(p.caption||'')}">${esc(p.caption||'雙擊照片可填寫說明')}</div>
+    <div class="photo-tile-actions"><button type="button" class="danger" data-photo-del="${esc(p.id)}" title="刪除此張照片">刪除</button></div>
+  </div>`).join(''):'<div class="photo-placeholder">尚無照片，按「圖片上傳」新增；照片將直接顯示在這個區塊。</div>';
+  $('photo-edit').disabled=!photos.length;
+}
+function addPhotos(files){
+  const r=getCurrent();if(!r)return;r.photos??=[];
+  const items=Array.from(files).filter(file=>file.type.startsWith('image/'));
+  for(const file of items){
+    const id='ph'+Date.now()+Math.random().toString(36).slice(2);
+    r.photos.push({id,name:file.name,url:URL.createObjectURL(file),include:true,caption:'',marks:[]});
+    if(!selectedPhotoId)selectedPhotoId=id;
+  }
+  markDirty();renderPhotos(r);$('photo-input').value='';
+  $('photo-order-status').textContent=items.length?`已加入 ${items.length} 張照片，共 ${r.photos.length} 張；所有照片依目前順序排列。`:'';
+}
+function selectPhotoThumbnail(id){
+  selectedPhotoId=id;
+  document.querySelectorAll('.photo-tile').forEach(el=>el.classList.toggle('is-selected',el.dataset.photo===id));
+}
+function photoAction(e){
+  const r=getCurrent();if(!r||!r.photos)return;
+  const b=e.target.closest('button');
+  if(!b){
+    const thumb=e.target.closest('[data-photo-preview]');
+    if(thumb)selectPhotoThumbnail(thumb.dataset.photoPreview);
+    return;
+  }
+  const id=b.dataset.photoDel;if(!id)return;
+  const i=r.photos.findIndex(x=>x.id===id);if(i<0)return;
+  if(view.open&&view.photoId===id)closePhotoViewer();
+  // 同案複製的照片可能共用 Object URL；不在此撤銷，避免其他槍枝的影像失效。
+  r.photos.splice(i,1);
+  if(selectedPhotoId===id)selectedPhotoId=r.photos[Math.min(i,r.photos.length-1)]?.id||null;
+  markDirty();renderPhotos(r);
+  $('photo-order-status').textContent=`已刪除照片，剩餘 ${r.photos.length} 張。`;
+}
+let draggedPhotoId=null;
+function clearPhotoDropCue(){
+  $('photo-gallery').classList.remove('drag-to-end');
+  document.querySelectorAll('#photo-gallery .photo-tile').forEach(el=>el.classList.remove('drop-before','drop-after','is-dragging'));
+}
+function movePhoto(photoId,targetId,placeAfter=false){
+  const r=getCurrent();if(!r?.photos)return;
+  const a=r.photos;
+  const from=a.findIndex(p=>p.id===photoId);
+  const target=targetId?a.findIndex(p=>p.id===targetId):a.length;
+  if(from<0||target<0||photoId===targetId)return;
+  const insertAt=target+(placeAfter&&targetId?1:0);
+  const [item]=a.splice(from,1);
+  const newIndex=Math.max(0,Math.min(a.length,insertAt-(insertAt>from?1:0)));
+  a.splice(newIndex,0,item);
+  markDirty();renderPhotos(r);
+  $('photo-order-status').textContent=`已將「${item.name}」移至第 ${newIndex+1} 張。`;
+}
+function photoDragStart(e){
+  const h=e.target.closest('[data-photo-drag-handle]');if(!h)return;
+  draggedPhotoId=h.dataset.photoDragHandle;
+  e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedPhotoId);
+  const tile=h.closest('.photo-tile');if(tile)tile.classList.add('is-dragging');
+}
+function photoDragOver(e){
+  if(!draggedPhotoId)return;
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  clearPhotoDropCue();
+  const tile=e.target.closest('.photo-tile');
+  if(!tile){$('photo-gallery').classList.add('drag-to-end');return;}
+  if(tile.dataset.photo===draggedPhotoId)return;
+  const rect=tile.getBoundingClientRect();
+  tile.classList.add(e.clientX<rect.left+rect.width/2?'drop-before':'drop-after');
+}
+function photoDrop(e){
+  if(!draggedPhotoId)return;
+  e.preventDefault();
+  const tile=e.target.closest('.photo-tile');
+  const rect=tile?.getBoundingClientRect();
+  const placeAfter=!!(rect&&e.clientX>=rect.left+rect.width/2);
+  const id=draggedPhotoId;
+  draggedPhotoId=null;clearPhotoDropCue();
+  movePhoto(id,tile?.dataset.photo||null,placeAfter);
+}
+function photoDragEnd(){draggedPhotoId=null;clearPhotoDropCue();}
+function getViewerRecord(){const r=getCurrent();return r&&(view.recordId===(r.id||'__draft__'))?r:null;}
+function getViewerPhoto(){return getViewerRecord()?.photos?.find(p=>p.id===view.photoId)||null;}
+function savePhotoCaption(){const p=getViewerPhoto();if(p&&p.caption!==$('viewer-caption').value){p.caption=$('viewer-caption').value;markDirty();}}
+function setViewerMode(mode){
+  view.mode=mode;
+  $('viewer-stage').classList.toggle('mode-mark',mode!=='pan');
+  document.querySelectorAll('[data-view-mode]').forEach(b=>b.classList.toggle('active',b.dataset.viewMode===mode));
+}
+function photoImagePoint(clientX,clientY){
+  const rect=$('viewer-stage').getBoundingClientRect();
+  return {x:(clientX-rect.left-view.tx)/view.scale,y:(clientY-rect.top-view.ty)/view.scale};
+}
+function clampZoom(val){return Math.max(.035,Math.min(20,val));}
+function updateViewerTransform(){
+  $('viewer-transform').style.transform=`translate(${view.tx}px,${view.ty}px) scale(${view.scale})`;
+  $('zoom-label').textContent=Math.round(view.scale*100)+'%';
+}
+function fitViewer(){
+  if(!view.w||!view.h)return;
+  const st=$('viewer-stage');if(!st.clientWidth||!st.clientHeight)return;
+  view.scale=clampZoom(Math.min((st.clientWidth-22)/view.w,(st.clientHeight-22)/view.h));
+  view.tx=(st.clientWidth-view.w*view.scale)/2;
+  view.ty=(st.clientHeight-view.h*view.scale)/2;
+  updateViewerTransform();
+}
+function zoomViewer(factor,cx,cy){
+  if(!view.w||!view.h)return;
+  const stage=$('viewer-stage'),x=cx??stage.clientWidth/2,y=cy??stage.clientHeight/2;
+  const previous=view.scale,next=clampZoom(previous*factor),ratio=next/previous;
+  view.tx=x-(x-view.tx)*ratio;
+  view.ty=y-(y-view.ty)*ratio;
+  view.scale=next;updateViewerTransform();
+}
+function renderMarks(){
+  const svg=$('viewer-markup'),photo=getViewerPhoto();if(!photo)return;
+  svg.setAttribute('viewBox',`0 0 ${view.w} ${view.h}`);
+  svg.style.width=view.w+'px';svg.style.height=view.h+'px';
+  const points=[...(photo.marks||[]),...(view.preview?[view.preview]:[])];
+  svg.innerHTML=points.map(m=>{
+    const x=m.x*view.w,y=m.y*view.h,color=esc(m.color||'#ffff00');
+    const outline=Math.max(2,Math.min(view.w,view.h)*.0017);
+    const thick=Math.max(4,Math.min(view.w,view.h)*.004);
+    if(m.kind==='point'){
+      const radius=Math.max(11,Math.min(view.w,view.h)*.012);
+      return `<circle cx="${x}" cy="${y}" r="${radius}" fill="none" stroke="#1b2330" stroke-width="${thick+2}"/><circle cx="${x}" cy="${y}" r="${radius}" fill="none" stroke="${color}" stroke-width="${thick}"/><path d="M ${x-radius-6} ${y} h ${2*radius+12} M ${x} ${y-radius-6} v ${2*radius+12}" stroke="${color}" stroke-width="${outline+1}"/>`;
+    }
+    const ex=(m.x2??m.x)*view.w,ey=(m.y2??m.y)*view.h,dx=ex-x,dy=ey-y;
+    const length=Math.hypot(dx,dy);if(length<1)return '';
+    const ux=dx/length,uy=dy/length,head=Math.max(17,Math.min(view.w,view.h)*.025);
+    const sx=ex-ux*head,sy=ey-uy*head;
+    const a=[ex,ey],b=[sx-uy*head*.5,sy+ux*head*.5],c=[sx+uy*head*.5,sy-ux*head*.5];
+    const line=`M ${x} ${y} L ${ex} ${ey}`,tip=`M ${b[0]} ${b[1]} L ${a[0]} ${a[1]} L ${c[0]} ${c[1]}`;
+    return `<path d="${line} ${tip}" fill="none" stroke="#1a2530" stroke-width="${thick+4}" stroke-linecap="round" stroke-linejoin="round"/><path d="${line} ${tip}" fill="none" stroke="${color}" stroke-width="${thick}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }).join('');
+}
+function viewerLoadPhoto(id){
+  savePhotoCaption();view.photoId=id;selectedPhotoId=id;
+  const p=getViewerPhoto();if(!p)return;
+  const r=getViewerRecord();const idx=r.photos.findIndex(x=>x.id===id);
+  $('viewer-photo-name').textContent=p.name;
+  $('viewer-photo-counter').textContent=`第 ${idx+1} 張／共 ${r.photos.length} 張`;
+  $('viewer-bottom-counter').textContent=`${idx+1} / ${r.photos.length}`;
+  $('viewer-caption').value=p.caption||'';
+  $('viewer-prev').disabled=idx===0;
+  $('viewer-next').disabled=idx===r.photos.length-1;
+  view.w=0;view.h=0;view.preview=null;view.pointer=null;
+  const image=$('viewer-image');
+  image.onload=()=>{
+    if(!view.open||view.photoId!==id)return;
+    view.w=image.naturalWidth;view.h=image.naturalHeight;
+    $('viewer-transform').style.width=view.w+'px';$('viewer-transform').style.height=view.h+'px';
+    image.style.width=view.w+'px';image.style.height=view.h+'px';
+    fitViewer();renderMarks();
+  };
+  image.src=p.url;
+  if(image.complete&&image.naturalWidth)image.onload();
+  renderPhotos(r);
+}
+function openPhotoViewer(id){
+  const r=getCurrent();if(!r)return;
+  if(!r.photos?.length){$('photo-input').click();return;}
+  const photo=r.photos.find(p=>p.id===id)||r.photos[0];
+  view.open=true;view.recordId=r.id||'__draft__';view.lastFocus=document.activeElement;
+  $('photo-viewer').hidden=false;document.body.classList.add('viewer-open');
+  setViewerMode('pan');viewerLoadPhoto(photo.id);
+  $('viewer-close').focus();
+}
+function closePhotoViewer(){
+  if(!view.open)return;
+  savePhotoCaption();view.open=false;view.pointer=null;view.preview=null;
+  $('photo-viewer').hidden=true;document.body.classList.remove('viewer-open');
+  const r=getViewerRecord();if(r)renderPhotos(r);
+  if(view.lastFocus?.isConnected)view.lastFocus.focus();
+  view.photoId=null;view.recordId=null;
+}
+function switchPhoto(step){
+  const r=getViewerRecord();if(!r)return;
+  const i=r.photos.findIndex(p=>p.id===view.photoId),next=i+step;
+  if(next>=0&&next<r.photos.length)viewerLoadPhoto(r.photos[next].id);
+}
+function viewerPointerDown(e){
+  if(e.button!==0||!view.w||!view.open)return;
+  e.preventDefault();$('viewer-stage').setPointerCapture(e.pointerId);
+  const pt=photoImagePoint(e.clientX,e.clientY);
+  if(view.mode!=='pan' && (pt.x<0||pt.y<0||pt.x>view.w||pt.y>view.h))return;
+  view.pointer={id:e.pointerId,startX:e.clientX,startY:e.clientY,tx:view.tx,ty:view.ty,pt};
+  if(view.mode==='pan')$('viewer-stage').classList.add('dragging');
+  else if(view.mode==='arrow')view.preview={kind:'arrow',x:pt.x/view.w,y:pt.y/view.h,x2:pt.x/view.w,y2:pt.y/view.h,color:$('viewer-color').value};
+}
+function viewerPointerMove(e){
+  if(!view.pointer||view.pointer.id!==e.pointerId)return;
+  if(view.mode==='pan'){
+    view.tx=view.pointer.tx+e.clientX-view.pointer.startX;
+    view.ty=view.pointer.ty+e.clientY-view.pointer.startY;updateViewerTransform();
+  } else if(view.mode==='arrow'&&view.preview){
+    const pt=photoImagePoint(e.clientX,e.clientY);
+    view.preview.x2=Math.max(0,Math.min(1,pt.x/view.w));
+    view.preview.y2=Math.max(0,Math.min(1,pt.y/view.h));renderMarks();
+  }
+}
+function viewerPointerUp(e){
+  if(!view.pointer||view.pointer.id!==e.pointerId)return;
+  const start=view.pointer.pt,p=getViewerPhoto();
+  const dist=Math.hypot(e.clientX-view.pointer.startX,e.clientY-view.pointer.startY);
+  if(p&&view.mode==='point'){
+    markDirty();(p.marks??=[]).push({kind:'point',x:start.x/view.w,y:start.y/view.h,color:$('viewer-color').value});
+  } else if(p&&view.mode==='arrow'){
+    const mark=view.preview;
+    if(dist<7){markDirty();(p.marks??=[]).push({kind:'point',x:start.x/view.w,y:start.y/view.h,color:$('viewer-color').value});}
+    else if(mark){markDirty();(p.marks??=[]).push({...mark});}
+  }
+  view.pointer=null;view.preview=null;
+  $('viewer-stage').classList.remove('dragging');renderMarks();
+}
+$('filters').addEventListener('submit',e=>{e.preventDefault();applyFilters();});
+$('quick-search').addEventListener('input',()=>applyFilters());
+$('new-btn').addEventListener('click',startNewCase);
+$('same-case-btn').addEventListener('click',startSameCase);
+$('case-editor').addEventListener('submit',saveCurrent);
+$('report-editor').addEventListener('submit',saveCurrent);
+$('report-editor').addEventListener('input',captureReportDraft);
+$('report-editor').addEventListener('change',captureReportDraft);
+$('c-suspect').addEventListener('input',()=>{suggestCaseName(getCurrent());renderEditContext(getCurrent());});
+$('case-editor').addEventListener('input',markDirty);
+$('case-editor').addEventListener('change',markDirty);
+$('c-type').addEventListener('change',e=>{
+  const r=getCurrent();if(!r)return;
+  const newType=e.target.value;
+  // 不同種類的檢測表可能共用 GUN_CHECK1 等欄位名稱，
+  // 為避免把上一把的火藥槍答案錯套到魚槍，僅在「複製後改槍種」時清除不相容的檢測欄位。
+  if(draft && r.copiedSourceType && newType && newType!==r.copiedSourceType){
+    const original=r.report||{};
+    r.report={CSNM:original.CSNM??r.caseName??'',DLV_NO:original.DLV_NO??'',GUN_NUM:original.GUN_NUM??'1'};
+    r.copiedSourceType=''; // 已處理跨槍種複製，避免後續切換時重複清空
+    setStatus('case-status','已選擇不同槍種：保留案件資料及照片；不相容的檢測答案已清空，請重新檢測填寫。');
+  }
+  r.type=newType;renderReport(r);
+});
+$('c-gunNo').addEventListener('input',e=>{$('r-gunNo').value=e.target.value;});
+$('c-unit').addEventListener('change',e=>{$('r-unit').value=e.target.value;});
+$('c-officer').addEventListener('input',e=>{$('r-tester').value=e.target.value;});
+$('c-date').addEventListener('input',e=>{const date=$('r-air-testDate');if(date)date.value=e.target.value;});
+$('list-body').addEventListener('click',e=>{
+  const link=e.target.closest('[data-open-gun]');if(link){e.preventDefault();loadRecord(link.dataset.openGun,true);return;}
+  if(e.target.matches('input[type=checkbox]'))return;
+  const row=e.target.closest('[data-case]');if(row){
+    const k=row.dataset.case;
+    if(k!==activeCaseKey){
+      const g=groups.find(x=>x.key===k);if(g&&!loadRecord(g.guns[0].id,false))return;
+      expanded.add(k);
+    }else{expanded.has(k)?expanded.delete(k):expanded.add(k);}
+    render();
+  }
+});
+$('list-body').addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.checkCase){const g=groups.find(x=>x.key===t.dataset.checkCase);if(g)for(const r of g.guns)t.checked?selected.add(r.id):selected.delete(r.id);}
+  if(t.dataset.checkGun)t.checked?selected.add(t.dataset.checkGun):selected.delete(t.dataset.checkGun);
+  render();
+});
+$('pager').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(!b||b.disabled)return;const v=b.dataset.page;currentPage=v==='prev'?currentPage-1:v==='next'?currentPage+1:Number(v);render();});
+$('print-btn').addEventListener('click',()=>{
+  const rows=records.filter(x=>selected.has(x.id));if(!rows.length){alert('請先勾選欲列印標籤的槍枝。\n可以在案件列勾選整案，也可以展開後逐把勾選。');return;}
+  $('print-output').innerHTML='<h2>槍枝標籤列印（示範）</h2><div class="print-labels">'+rows.map(x=>`<div class="print-label">槍枝編號：${esc(x.gunNo)}<br>初鑑單號：${esc(x.id)}<br>槍枝種類：${esc(x.type)}</div>`).join('')+'</div>';window.print();
+});
+$('photo-add').addEventListener('click',()=>$('photo-input').click());
+$('photo-input').addEventListener('change',e=>addPhotos(e.target.files));
+$('photo-edit').addEventListener('click',()=>openPhotoViewer(selectedPhotoId));
+$('photo-gallery').addEventListener('click',photoAction);
+$('photo-gallery').addEventListener('dblclick',e=>{const x=e.target.closest('[data-photo-preview]');if(x)openPhotoViewer(x.dataset.photoPreview);});
+$('photo-gallery').addEventListener('dragstart',photoDragStart);
+$('photo-gallery').addEventListener('dragover',photoDragOver);
+$('photo-gallery').addEventListener('drop',photoDrop);
+$('photo-gallery').addEventListener('dragend',photoDragEnd);
+$('photo-gallery').addEventListener('keydown',e=>{
+  const handle=e.target.closest('[data-photo-drag-handle]');
+  if(!handle||!e.altKey||!['ArrowLeft','ArrowRight'].includes(e.key))return;
+  const r=getCurrent(),i=r?.photos?.findIndex(p=>p.id===handle.dataset.photoDragHandle);
+  if(i<0)return;
+  const next=i+(e.key==='ArrowLeft'?-1:1);
+  if(next<0||next>=r.photos.length)return;
+  e.preventDefault();const movedId=handle.dataset.photoDragHandle;
+  movePhoto(movedId,r.photos[next].id,e.key==='ArrowRight');
+  document.querySelector(`[data-photo-drag-handle="${movedId}"]`)?.focus();
+});
+$('viewer-close').addEventListener('click',closePhotoViewer);
+$('photo-viewer').addEventListener('mousedown',e=>{if(e.target===$('photo-viewer'))closePhotoViewer();});
+$('viewer-caption').addEventListener('input',savePhotoCaption);
+$('viewer-prev').addEventListener('click',()=>switchPhoto(-1));
+$('viewer-next').addEventListener('click',()=>switchPhoto(1));
+$('zoom-in').addEventListener('click',()=>zoomViewer(1.25));
+$('zoom-out').addEventListener('click',()=>zoomViewer(.8));
+$('zoom-fit').addEventListener('click',fitViewer);
+$('zoom-actual').addEventListener('click',()=>{const stage=$('viewer-stage');zoomViewer(1/view.scale,stage.clientWidth/2,stage.clientHeight/2);});
+document.querySelectorAll('[data-view-mode]').forEach(b=>b.addEventListener('click',()=>setViewerMode(b.dataset.viewMode)));
+$('mark-undo').addEventListener('click',()=>{const p=getViewerPhoto();if(p?.marks?.length){p.marks.pop();markDirty();renderMarks();}});
+$('mark-clear').addEventListener('click',()=>{const p=getViewerPhoto();if(p?.marks?.length&&confirm('清除目前照片的全部標記？')){p.marks=[];markDirty();renderMarks();}});
+$('viewer-stage').addEventListener('wheel',e=>{if(!view.open)return;e.preventDefault();const rect=$('viewer-stage').getBoundingClientRect();zoomViewer(e.deltaY<0?1.15:1/1.15,e.clientX-rect.left,e.clientY-rect.top);},{passive:false});
+$('viewer-stage').addEventListener('pointerdown',viewerPointerDown);
+$('viewer-stage').addEventListener('pointermove',viewerPointerMove);
+$('viewer-stage').addEventListener('pointerup',viewerPointerUp);
+$('viewer-stage').addEventListener('pointercancel',e=>{view.pointer=null;view.preview=null;$('viewer-stage').classList.remove('dragging');renderMarks();});
+document.addEventListener('keydown',e=>{
+  if(!view.open)return;
+  if(e.key==='Escape'){e.preventDefault();closePhotoViewer();return;}
+  if(e.target?.matches('input,textarea,select'))return;
+  if(e.key==='ArrowLeft'){e.preventDefault();switchPhoto(-1);}
+  if(e.key==='ArrowRight'){e.preventDefault();switchPhoto(1);}
+});
+window.addEventListener('resize',()=>{if(view.open&&view.w)fitViewer();});
+refreshGroups();filtered=groups;loadRecord(records[0].id);applyFilters();
+
+</script>
+</body>
+</html>
